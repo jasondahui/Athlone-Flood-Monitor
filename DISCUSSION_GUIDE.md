@@ -23,7 +23,7 @@ Flood-focused, not a general weather synopsis. Each item is `{"type", "text"}` w
 - `change` + `"dir": "up" | "down" | "shift"` — **lead with this whenever the forecast moved meaningfully** since the last
   discussion (which model, from what to what, and what that means for the street). Shown as ▲ red / ▼ green / ◆ orange.
 - `risk` + `"level": "none" | "sidewalk" | "yard" | "garage" | "garageplus" | "structure"` — the most likely street level
-  at the peak, and what it would take to reach the next level. Colored with the dashboard's level color; also colors the box.
+  at the peak (optional `"level_low"` for a range, e.g. yard–garage), and what it would take to reach the next level. Colored with the dashboard's level color; also colors the box.
 - `models` — agreement or spread (the wettest-3-hour numbers per model), and which model is the outlier.
 - `timing` — when the burst most likely hits, and any second round.
 - `tide` — high tide/surge overlap with the burst, and the channel's current state.
