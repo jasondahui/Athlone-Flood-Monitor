@@ -155,7 +155,7 @@
             <a id="wxOpen" href="https://www.windy.com/?satellite,37.477,-122.192,7" target="_blank" rel="noopener" class="text-xs text-sky-300 underline">Open in Windy ↗</a>
         </div>
         <iframe id="windyFrame" title="Windy satellite and radar view" loading="lazy" class="w-full rounded-xl border border-slate-700" style="height:460px" frameborder="0"></iframe>
-        <p class="text-[0.7rem] text-slate-500">Satellite imagery by <a class="underline" href="https://www.windy.com" target="_blank" rel="noopener">Windy.com</a>. Satellite shows the clouds: an incoming front is a band of bright cloud approaching from the west or northwest. Radar shows where rain is falling now; yellow, orange and red are the heavy cores. Press ▶ to loop the last few hours. The embedded map shows one layer at a time; open it in Windy to blend radar over satellite.</p>
+        <p class="text-[0.7rem] text-slate-500">Satellite imagery by <a class="underline" href="https://www.windy.com" target="_blank" rel="noopener">Windy.com</a>. Satellite shows the clouds: an incoming front is a band of bright cloud approaching from the west or northwest. Radar shows where rain is falling now; yellow, orange and red are the heavy cores. Press ▶ to loop the last few hours. The embedded radar scale is in mm per hour (Windy's embed ignores the inch setting): 0.6 ≈ 0.02 in/h, 3 ≈ 0.1, 12 ≈ 0.5, 50 ≈ 2, 200 ≈ 8 in/h. For comparison, 0.4 in in one hour (about 10 mm/h, yellow-green) is the dashboard's burst alarm. The embedded map shows one layer at a time; open it in Windy to blend radar over satellite.</p>
     </section>
 
     <!-- Drainage map -->
@@ -247,6 +247,7 @@
         </div>
         <details class="text-xs text-slate-500"><summary class="cursor-pointer text-slate-400">Version <span id="appVersion"></span>: change history</summary>
             <ul class="list-disc pl-5 mt-1 space-y-0.5">
+                <li><b>2.43</b> (Nov 18, 2026): radar scale conversion to inches under the Windy map.</li>
                 <li><b>2.42</b> (Nov 18, 2026): larger Export (⬆) and Import (⬇) arrows.</li>
                 <li><b>2.41</b> (Nov 18, 2026): the graph's show/hide controls are now buttons above the graph (crossed out when hidden; remembered in this browser).</li>
                 <li><b>2.40</b> (Nov 18, 2026): forecast-model buttons on the graph (Consensus, HRRR, RRFS, NBM), linked to the "Rate on" setting; RRFS-only and NBM-only options added.</li>
@@ -304,7 +305,7 @@ const TZ = 'America%2FLos_Angeles';
 const GATE_DATE = '2024-11-01';          // county flap gate installed Nov 2024
 const NAVD_OFFSET = 1.18;                // NOAA 9414523: NAVD88 = MLLW − 1.18 ft
 const STREET_NAVD = 21;                  // USGS 3DEP ground elevation on Athlone Way
-const VERSION = '2.42 (Nov 18, 2026)';
+const VERSION = '2.43 (Nov 18, 2026)';
 // Text size: the page is rem-based, so one root percentage scales everything; the chart and map follow it
 const uiScale = () => (storageGet('athlone_textsize', 115)) / 100;
 function applyTextSize() {
