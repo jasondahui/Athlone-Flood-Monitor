@@ -155,7 +155,8 @@
             <a id="wxOpen" href="https://www.windy.com/?satellite,37.477,-122.192,7" target="_blank" rel="noopener" class="text-xs text-sky-300 underline">Open in Windy ↗</a>
         </div>
         <iframe id="windyFrame" title="Windy satellite and radar view" loading="lazy" class="w-full rounded-xl border border-slate-700" style="height:460px" frameborder="0"></iframe>
-        <p class="text-[0.7rem] text-slate-500">Satellite imagery by <a class="underline" href="https://www.windy.com" target="_blank" rel="noopener">Windy.com</a>. Satellite shows the clouds: an incoming front is a band of bright cloud approaching from the west or northwest. Radar shows where rain is falling now; yellow, orange and red are the heavy cores. Press ▶ to loop the last few hours. The embedded radar scale is in mm per hour (Windy's embed ignores the inch setting): 0.6 ≈ 0.02 in/h, 3 ≈ 0.1, 12 ≈ 0.5, 50 ≈ 2, 200 ≈ 8 in/h. For comparison, 0.4 in in one hour (about 10 mm/h, yellow-green) is the dashboard's burst alarm. The embedded map shows one layer at a time; open it in Windy to blend radar over satellite.</p>
+        <div id="radarScale" class="w-full"></div>
+        <p class="text-[0.7rem] text-slate-500">Satellite imagery by <a class="underline" href="https://www.windy.com" target="_blank" rel="noopener">Windy.com</a>. Satellite shows the clouds: an incoming front is a band of bright cloud approaching from the west or northwest. Radar shows where rain is falling now; yellow, orange and red are the heavy cores. Press ▶ to loop the last few hours. Windy's own radar scale is in mm per hour (the embed ignores the inch setting), so use the scale under the map instead: same colors, in inches per hour, with the rain rates that matter for the street. The embedded map shows one layer at a time; open it in Windy to blend radar over satellite.</p>
     </section>
 
     <!-- Drainage map -->
@@ -247,6 +248,7 @@
         </div>
         <details class="text-xs text-slate-500"><summary class="cursor-pointer text-slate-400">Version <span id="appVersion"></span>: change history</summary>
             <ul class="list-disc pl-5 mt-1 space-y-0.5">
+                <li><b>2.44</b> (Nov 18, 2026): radar color scale in inches per hour under the map, marked with the burst alarm and the rate that reaches each flood level if it lasts 3 hours.</li>
                 <li><b>2.43</b> (Nov 18, 2026): radar scale conversion to inches under the Windy map.</li>
                 <li><b>2.42</b> (Nov 18, 2026): larger Export (⬆) and Import (⬇) arrows.</li>
                 <li><b>2.41</b> (Nov 18, 2026): the graph's show/hide controls are now buttons above the graph (crossed out when hidden; remembered in this browser).</li>
@@ -305,7 +307,7 @@ const TZ = 'America%2FLos_Angeles';
 const GATE_DATE = '2024-11-01';          // county flap gate installed Nov 2024
 const NAVD_OFFSET = 1.18;                // NOAA 9414523: NAVD88 = MLLW − 1.18 ft
 const STREET_NAVD = 21;                  // USGS 3DEP ground elevation on Athlone Way
-const VERSION = '2.43 (Nov 18, 2026)';
+const VERSION = '2.44 (Nov 18, 2026)';
 // Text size: the page is rem-based, so one root percentage scales everything; the chart and map follow it
 const uiScale = () => (storageGet('athlone_textsize', 115)) / 100;
 function applyTextSize() {
@@ -1521,6 +1523,7 @@ function renderLive() {
 function refreshAll() {
     const s = getSettings(), cal = calibrate(s.gate);
     renderSettings(cal, s);
+    try { renderRadarScale(cal); } catch (e) { console.warn('radar scale', e); }
     if (currentMode.type === 'replay') loadReplay(currentMode.id, currentMode.failNote);
     else { renderLive(); renderLibrary(); }
 }
@@ -1654,6 +1657,39 @@ function setWxLayer(name) {
         b.style.background = k === name ? '#0284c7' : 'transparent'; b.style.color = k === name ? '#fff' : '#cbd5e1'; b.setAttribute('aria-pressed', k === name); });
 }
 setWxLayer(storageGet('athlone_wx_layer', 'radar'));   // radar by default; the choice is remembered per browser
+
+// Radar color scale in inches per hour, drawn under the Windy map. Colors approximate Windy's radar palette (its embedded
+// legend is in mm/h only). Marked with the 1-hour burst alarm and, for each flood level, the steady rate that reaches that
+// level's 3-hour threshold if it lasts 3 hours (threshold ÷ 3). Uses the live calibrated thresholds.
+const RADAR_STOPS = [   // [in/h, color] approximating Windy's radar colors
+    [0.004, '#3b2a6b'], [0.02, '#4b48a8'], [0.05, '#2f7fd0'], [0.1, '#22b0b8'], [0.2, '#38c35a'],
+    [0.35, '#a6d43a'], [0.5, '#f1e22d'], [1.0, '#f5a524'], [2.0, '#e8432b'], [4.0, '#c3157e'], [8.0, '#e06ad9']
+];
+function renderRadarScale(cal) {
+    const el = document.getElementById('radarScale'); if (!el) return;
+    const W = 1000, x0 = 20, x1 = W - 20, lo = Math.log10(0.02), hi = Math.log10(3);
+    const X = v => x0 + (Math.log10(Math.max(0.02, Math.min(3, v))) - lo) / (hi - lo) * (x1 - x0);
+    const grad = RADAR_STOPS.filter(([v]) => v >= 0.015 && v <= 4).map(([v, c]) => `<stop offset="${((X(v) - x0) / (x1 - x0) * 100).toFixed(1)}%" stop-color="${c}"/>`).join('');
+    const ticks = [0.02, 0.05, 0.1, 0.25, 0.5, 1, 2, 3].map(v => `<line x1="${X(v)}" x2="${X(v)}" y1="60" y2="66" stroke="#94a3b8"/><text x="${X(v)}" y="80" fill="#cbd5e1" font-size="13" text-anchor="middle">${v < 0.1 ? v.toFixed(2) : v}</text>`).join('');
+    // flood levels: steady rate for 3 h = threshold / 3. Labels alternate above/below the bar so they don't collide.
+    const th = (cal && cal.thresh) || DEFAULT_R3, names = ['sidewalk', 'yard', 'garage', 'garageplus', 'structure'];
+    const marks = names.map((n, i) => ({ v: th[n] / 3, col: LV_COLOR[i + 1], txt: `${['BLUE', 'GREEN', 'YELLOW', 'RED', 'PURPLE'][i]} ${(th[n] / 3).toFixed(2)}` }));
+    const lvSvg = marks.map((m, i) => { const up = i % 2 === 0, y = up ? 18 : 112;
+        return `<line x1="${X(m.v)}" x2="${X(m.v)}" y1="${up ? 24 : 66}" y2="${up ? 34 : 98}" stroke="${m.col}" stroke-width="2.5"/>
+                <circle cx="${X(m.v)}" cy="${up ? 24 : 98}" r="3.5" fill="${m.col}"/>
+                <text x="${X(m.v)}" y="${y}" fill="${m.col}" font-size="13" font-weight="700" text-anchor="middle">${m.txt}</text>`; }).join('');
+    const bx = X(BURST_1H);
+    el.innerHTML = `<svg viewBox="0 0 ${W} 150" style="width:100%;height:auto;display:block" role="img" aria-label="Radar rain-rate color scale in inches per hour with flood thresholds">
+        <defs><linearGradient id="rgrad" x1="0" x2="1">${grad}</linearGradient></defs>
+        <rect x="${x0}" y="36" width="${x1 - x0}" height="24" rx="5" fill="url(#rgrad)"/>
+        ${ticks}${lvSvg}
+        <polygon points="${bx - 7},68 ${bx + 7},68 ${bx},58" fill="#fff" stroke="#0f172a" stroke-width="1.5"/>
+        <polygon points="${bx - 7},28 ${bx + 7},28 ${bx},38" fill="#fff" stroke="#0f172a" stroke-width="1.5"/>
+        <text x="${bx + 10}" y="140" fill="#fff" font-size="13" font-weight="700">◀ 1-hour burst alarm ${BURST_1H.toFixed(2)} in/h (white arrows)</text>
+        <text x="${x0}" y="140" fill="#94a3b8" font-size="12">inches per hour · lighter rain shows as purple and blue</text>
+    </svg>
+    <p class="text-[0.7rem] text-slate-500 leading-snug mt-1">Colored marks: the steady rate that reaches each flood level if it lasts 3 hours (the level's 3-hour threshold ÷ 3, ${getSettings().gate ? 'with' : 'without'} the flap gate). A short burst can be heavier than its mark without flooding; an hour at the white arrows sets off the burst alarm. Colors approximate Windy's radar palette.</p>`;
+}
 
 </script>
 </body>
