@@ -1,0 +1,1406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Athlone Terrace Flood Risk Dashboard</title>
+    <link rel="icon" id="favicon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2064%2064%22%3E%3Cdefs%3E%3CclipPath%20id%3D%22c%22%3E%3Crect%20width%3D%2264%22%20height%3D%2264%22%20rx%3D%2214%22/%3E%3C/clipPath%3E%3C/defs%3E%3Cg%20clip-path%3D%22url%28%23c%29%22%3E%3Crect%20width%3D%2264%22%20height%3D%2264%22%20fill%3D%22%230f172a%22/%3E%3Cpath%20d%3D%22M32%209%20L54%2028%20H48%20V46%20H16%20V28%20H10%20Z%22%20fill%3D%22%23e2e8f0%22/%3E%3Crect%20x%3D%2228%22%20y%3D%2234%22%20width%3D%228%22%20height%3D%2212%22%20fill%3D%22%230f172a%22/%3E%3Cpath%20d%3D%22M-4%2041%20Q4%2035%2012%2041%20T28%2041%20T44%2041%20T60%2041%20T76%2041%20V64%20H-4%20Z%22%20fill%3D%22%2338bdf8%22/%3E%3Cpath%20d%3D%22M-4%2050%20Q4%2044%2012%2050%20T28%2050%20T44%2050%20T60%2050%20T76%2050%22%20fill%3D%22none%22%20stroke%3D%22%230f172a%22%20stroke-width%3D%222.5%22%20opacity%3D%22.35%22/%3E%3C/g%3E%3C/svg%3E">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+    <style>
+        html { font-size: var(--ui-scale, 115%); }   /* all Tailwind sizes are rem-based, so this scales the whole page */
+        body { background-color: #0f172a; color: #f8fafc; font-family: system-ui, -apple-system, sans-serif; }
+        .tbl td, .tbl th { padding: 6px 8px; white-space: nowrap; }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+<div class="max-w-7xl mx-auto space-y-6">
+
+    <!-- Header -->
+    <header class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl">
+        <div>
+            <h1 class="text-2xl font-bold text-white tracking-tight">Athlone Terrace Flood Risk Dashboard</h1>
+            <p class="text-slate-400 text-sm mt-1">Atherton Channel gauge at Caltrain (rain + channel level) · HRRR rain forecast · NOAA Redwood City tide + SF Bay surge forecast · NWS alerts</p>
+            <p id="dataStatus" class="text-xs mt-2 font-medium text-slate-400">Loading live data…</p>
+        </div>
+        <div class="flex flex-col items-stretch md:items-end gap-2 shrink-0">
+            <button id="btnFetchLive" onclick="loadLiveData(true)" class="bg-sky-600 hover:bg-sky-500 text-white font-medium px-4 py-2 rounded-xl text-sm transition">🔄 Refresh Live Data</button>
+            <div class="flex items-center gap-1 text-sm text-slate-400" role="group" aria-label="Text size">
+                <span class="mr-1">Text size</span>
+                <button type="button" data-size="100" onclick="setTextSize(100)" class="tsBtn px-2 py-0.5 rounded border border-slate-600" style="font-size:0.8rem">A</button>
+                <button type="button" data-size="115" onclick="setTextSize(115)" class="tsBtn px-2 py-0.5 rounded border border-slate-600" style="font-size:1rem">A</button>
+                <button type="button" data-size="130" onclick="setTextSize(130)" class="tsBtn px-2 py-0.5 rounded border border-slate-600" style="font-size:1.2rem">A</button>
+            </div>
+        </div>
+    </header>
+
+    <details id="discussionBox" class="hidden bg-slate-800 border border-sky-800 rounded-2xl p-4 text-sm shadow-xl">
+        <summary class="cursor-pointer"><span class="font-semibold text-sky-200">🌧️ Storm discussion</span> <span id="discMeta" class="text-xs text-slate-400"></span><div id="discHeadline" class="text-slate-200 mt-1"></div></summary>
+        <div id="discBody" class="mt-3 space-y-3 text-slate-300"></div>
+    </details>
+    <div id="nwsBanner" class="hidden"></div>
+
+    <!-- Live gauges -->
+    <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-xl space-y-3">
+        <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-1">
+            <h2 class="text-md font-semibold text-slate-200">Live Gauges: Atherton Channel (San Mateo County / OneShoreline)</h2>
+            <span id="gaugeStamp" class="text-xs text-slate-500">loading…</span>
+        </div>
+        <div id="gaugeTiles" class="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs"></div>
+        <p class="text-xs text-slate-500 leading-snug">The county sets these channel thresholds for the community just downstream of the Caltrain crossing, which includes Athlone Terrace. The street (~21 ft NAVD88) sits in a low pocket drained by the Athlone Terrace pump station, below the channel banks to the east (~27 ft). The Bay itself peaks around 9.5 ft NAVD88, so what floods the street is stormwater: hard bursts of rain that outrun the pumps, plus channel water pushing back through the outlet (slowed by the flap gate since Nov 2024).</p>
+    </div>
+
+    <!-- Chart -->
+    <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl space-y-4">
+        <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
+            <h2 id="chartTitle" class="text-lg font-semibold text-slate-200">Past 24 h + 72-Hour Forecast</h2>
+            <div class="flex flex-wrap items-center gap-4 text-xs font-medium">
+                <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-yellow-400/30 border border-yellow-400 inline-block"></span> Daylight</span>
+                <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-slate-900 border border-slate-600 inline-block"></span> Night</span>
+                <span class="flex items-center gap-1.5"><span class="w-3 h-0.5 border-t-2 border-dashed border-sky-400 inline-block"></span> NOW</span>
+                <span class="flex items-center gap-1.5"><span class="w-3 h-1.5 bg-orange-500 inline-block"></span> Risk hours</span>
+            </div>
+        </div>
+        <div class="relative w-full h-[460px]"><canvas id="forecastChart"></canvas></div>
+        <p id="chartNote" class="text-xs text-slate-500"></p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Risk card -->
+        <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl space-y-4">
+            <h3 id="riskTitle" class="text-md font-semibold text-slate-300">Peak Risk Rating</h3>
+            <div id="riskBadge" class="p-4 rounded-xl border bg-slate-900 border-slate-600 text-slate-300 text-center">
+                <div id="riskLevel" class="text-2xl font-bold uppercase tracking-wider">--</div>
+                <div id="riskDesc" class="text-xs mt-1 opacity-80">Loading…</div>
+            </div>
+            <div class="space-y-2 text-xs text-slate-300 pt-2 border-t border-slate-700">
+                <div class="flex justify-between gap-2"><span>Peak 3-h rain:</span><span id="statR3" class="font-bold text-white text-right">--</span></div>
+                <div class="flex justify-between gap-2"><span>Peak 1-h rain:</span><span id="statR1" class="font-bold text-white text-right">--</span></div>
+                <div class="flex justify-between gap-2"><span>24-h rain:</span><span id="statR24" class="font-bold text-white text-right">--</span></div>
+                <div class="flex justify-between gap-2"><span>Channel @ Caltrain:</span><span id="statStage" class="font-bold text-white text-right">--</span></div>
+                <div class="flex justify-between gap-2"><span>Max tide:</span><span id="statTide" class="font-bold text-white text-right">--</span></div>
+                <div class="flex justify-between gap-2"><span>Storm surge:</span><span id="statSurge" class="font-bold text-white text-right">--</span></div>
+            </div>
+            <div id="riskCaveat" class="text-xs text-amber-300/90 leading-snug"></div>
+
+            <div class="pt-3 border-t border-slate-700 space-y-2 text-xs">
+                <div class="flex items-center justify-between">
+                    <span class="font-semibold text-slate-300">Model Settings</span>
+                    <button onclick="resetSettings()" class="text-slate-400 hover:text-white underline">reset</button>
+                </div>
+                <label class="flex justify-between items-center gap-2 text-slate-400">Flap gate on outfall (installed Nov 2024)
+                    <input id="setGate" type="checkbox" class="accent-sky-500" onchange="saveSettings()"></label>
+                <label class="flex justify-between items-center gap-2 text-slate-400">HRRR rain bias factor (×)
+                    <input id="setBias" type="number" step="0.05" min="0.5" max="4" class="w-20 bg-slate-900 border border-slate-700 rounded p-1 text-slate-200 text-right" onchange="saveSettings()"></label>
+                <p id="learnedBias" class="text-[0.7rem] text-slate-400 leading-snug"></p>
+                <div id="thresholdTable" class="text-slate-400 space-y-1 pt-1"></div>
+                <p class="text-[0.7rem] text-slate-500 leading-snug">The rating uses the hardest 3 hours of rain at the Caltrain gauge (measured for the past, HRRR forecast × bias for the future). Thresholds calibrate from the storms you've labeled, within the active gate setting. Pre-gate storms still set lower bounds, since the gate can only help. A live channel level at county Monitoring, Watch or Warning raises the rating to at least BLUE, GREEN or YELLOW.</p>
+            </div>
+        </div>
+
+        <!-- Storm library -->
+        <div class="lg:col-span-2 bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <h3 class="text-md font-semibold text-slate-300">Storm Library: replay any storm, label what the street did</h3>
+                <span id="libStatus" class="text-xs text-slate-500"></span>
+            </div>
+            <p class="text-xs text-slate-500 leading-snug">New storms are added automatically from the county gauge archive whenever this page loads, as long as it's opened within about two weeks of the storm (the page doesn't need to be open during it). Set the "Street did" column after each storm. Unlabeled storms don't affect the thresholds. Labels are saved in this browser only; use Export to save them to a file (as a backup, to move them to another device, or to send them in so they can be built into the shared version).</p>
+            <div class="flex flex-wrap gap-2 text-xs">
+                <button type="button" onclick="exportLabels()" class="bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-1.5 rounded-lg">⬇ Export labels &amp; logged storms</button>
+                <label class="bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-1.5 rounded-lg cursor-pointer">⬆ Import<input type="file" accept=".json,application/json" class="hidden" onchange="importLabels(this)"></label>
+                <span id="ioStatus" class="text-slate-500 self-center"></span>
+            </div>
+            <div class="overflow-x-auto"><table class="tbl w-full text-xs">
+                <thead class="text-slate-400 text-left border-b border-slate-700"><tr>
+                    <th>Storm</th><th class="text-right">Peak 1 h</th><th class="text-right">Peak 3 h</th><th class="text-right">24 h</th><th class="text-right">Channel peak</th><th title="What the model predicts from the hardest 3 hours of rain, raised by the channel peak where the channel was at a county level. Not an observation.">Model predicts<br><span class="font-normal text-[0.7rem]">(rain + channel; <sup>ch</sup> = raised by channel)</span></th><th>Street did<br><span class="font-normal text-[0.7rem]">(observed)</span></th><th></th>
+                </tr></thead>
+                <tbody id="libRows"></tbody>
+            </table></div>
+            <form id="addForm" onsubmit="addPastDate(event)" class="flex flex-wrap items-end gap-2 pt-3 border-t border-slate-700 text-xs">
+                <label class="text-slate-400">Add a past date from the gauge archive<br>
+                    <input type="date" id="addDate" required class="bg-slate-900 border border-slate-700 rounded-lg p-2 text-slate-200 mt-1"></label>
+                <button id="addBtn" class="bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-3 py-2 rounded-lg">➕ Add storm</button>
+                <span id="addMsg" class="text-slate-500"></span>
+            </form>
+        </div>
+    </div>
+
+    <!-- Drainage map -->
+    <section class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl space-y-3">
+        <h2 class="text-lg font-semibold text-slate-200">Reference: how Athlone Terrace drains</h2>
+        <p class="text-xs text-slate-400">Plan view and side view of the storm-drain route from Athlone Terrace to the Bay, built from county records. Items marked "inferred" haven't been confirmed by the county.</p>
+        <iframe id="mapFrame" title="Athlone Terrace drainage map" class="w-full rounded-xl border border-slate-700" style="width:100%;height:1600px;background:#1e293b;border:1px solid #334155" loading="lazy"></iframe>
+    </section>
+
+    <!-- Rules -->
+    <section class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl space-y-4 text-sm text-slate-300">
+        <h2 class="text-lg font-semibold text-slate-200">How this dashboard works: every rule it applies</h2>
+        <p class="text-xs text-amber-300">This is a homemade tool, not an official warning. For official alerts, sign up for SMC Alert and follow the National Weather Service. Flood labels describe what was seen at one house on Athlone Terrace; other houses on the street may flood earlier or later.</p>
+
+        <div class="grid md:grid-cols-2 gap-5">
+        <div class="space-y-2">
+            <h3 class="font-semibold text-slate-200">Risk rating</h3>
+            <ul class="list-disc pl-5 space-y-1 text-xs text-slate-400">
+                <li>The rating looks at the hardest 3 hours of rain from now through the end of the forecast: rain measured so far plus the HRRR forecast for the hours ahead.</li>
+                <li>Forecast rain is multiplied by a bias factor (default 1.25). Checked against archived HRRR for the 19 library storms with a working Caltrain gauge, the gauge's hardest 3 hours were a median 1.30× the forecast's, but individual storms ranged from 0.3× to 4×, so the factor corrects the typical miss, not the big ones.</li>
+                <li>The page also learns its own factor: each time it loads, it saves what HRRR forecast for 3–6 hours ahead, and once those hours have been measured it compares the two. Rain events are picked on either forecast or measured rain, so false alarms count as well as misses. The learned value (median of measured ÷ forecast hardest 3 hours) appears in Model Settings with a button to use it; it needs about 8 events before it means much.</li>
+                <li>That 3-hour total is compared with five thresholds, one per street level at one house on Athlone Terrace: BLUE = sidewalk (water covers the sidewalk), GREEN = yard (past the sidewalk but short of the garage door), YELLOW = garage (reaches the garage door), RED = garage + (above the garage-door base, not inside), PURPLE = structure (water inside).</li>
+                <li>If the channel at Caltrain is at or above the county's Monitoring (2.8 ft), Watch (4.1 ft) or Warning (5.5 ft) level right now, the rating is raised to at least BLUE, GREEN or YELLOW. Replays and the library's "Model predicts" column apply the same bump using each storm's channel peak. Both documented storms since the gate with the channel above Watch reached the garage doors.</li>
+                <li>If the Caltrain gauge has measured 0.40 in or more in the last hour, the rating is raised to at least YELLOW right away. The documented garage-level storms had hardest hours of 0.43 to 0.59 in, and HRRR under-forecast those bursts by about 3×, so a measured burst is a better early signal than the forecast.</li>
+                <li>When the forecast has rain, the risk card also says what level a 3× forecast miss would reach ("If HRRR is low…"), since that is how far off it was before the Mar 2023 and Dec 2025 floods.</li>
+                <li>If live data fails completely, the page shows "NO LIVE DATA" (not a past storm) and keeps retrying every 10 minutes.</li>
+                <li>The tide is shown for context only. The street sits at about 21 ft NAVD88 and the Bay has peaked near 9.5 ft, so the tide isn't part of the rating.</li>
+            </ul>
+        </div>
+        <div class="space-y-2">
+            <h3 class="font-semibold text-slate-200">How the thresholds are set</h3>
+            <ul class="list-disc pl-5 space-y-1 text-xs text-slate-400">
+                <li>The thresholds are fitted on rain only; the channel bump above is applied afterwards.</li>
+                <li>Only storms with a documented street outcome (a photo or a direct report) are labeled, and only labeled storms affect the thresholds.</li>
+                <li>Storms are split into two periods: before and after the flap gate was installed (Nov 1, 2024). The rating uses the after-gate period unless the gate setting is turned off.</li>
+                <li>For each level, the lower bound is the wettest labeled storm that stayed below that level (from either period, since the gate can only help). The upper bound is the driest after-gate storm that reached the level.</li>
+                <li>If both bounds exist, the threshold is the midpoint. If only the lower bound exists, it's 10% above it (at least +0.05 in). If neither exists, defaults are used: 0.30, 0.50, 0.75, 0.90 and 1.30 in per 3 h (sidewalk through structure). These defaults are guesses, set below the documented storms (garage at 0.95–1.07, garage + at 0.90) but not fitted to data.</li>
+                <li>Each level must be at least 0.05 in above the one below it (0.25 in for structure).</li>
+            </ul>
+        </div>
+        <div class="space-y-2">
+            <h3 class="font-semibold text-slate-200">Which storms are in the library</h3>
+            <ul class="list-disc pl-5 space-y-1 text-xs text-slate-400">
+                <li>Storm boundaries: any hour with at least 0.02 in of rain at any of the three gauges, or a channel level of 2.8 ft or more, counts as storm activity. A dry gap of more than 6 hours ends a storm; until then it shows as "in progress" and isn't used to set thresholds. Each storm's window runs from 6 hours before its first active hour to 7 hours after its last.</li>
+                <li>Built-in storms (Sep 2022 to Oct 2026): every storm with a channel peak of at least 4.1 ft (county Watch) or a peak 3-hour rain total of at least 0.5 in, plus any storm with a documented street outcome.</li>
+                <li>New storms are logged automatically when the page opens, looking back up to 14 days, if they have at least 0.25 in of total rain, at least 0.15 in in 3 hours, or a channel peak of at least 2.8 ft.</li>
+            </ul>
+        </div>
+        <div class="space-y-2">
+            <h3 class="font-semibold text-slate-200">Data checks</h3>
+            <ul class="list-disc pl-5 space-y-1 text-xs text-slate-400">
+                <li>Rain comes from the Caltrain gauge. If it recorded less than 40% of what a nearby gauge recorded for the same storm (and that gauge had at least 0.3 in), the nearby gauge is used instead: Redwood City first, then Palo Alto. The storm is marked with the gauge used.</li>
+                <li>Channel readings above 12 ft are discarded as sensor errors (the record high is 6.6 ft).</li>
+                <li>Rain totals come from each gauge's running total. In Feb 2026 the Caltrain gauge sent that total under a different code (PPU instead of PC); the dashboard uses the PPU value whenever a gauge has sent no PC value for more than 12 hours.</li>
+                <li>Live and in the library, an hour of 0.5 in or more at one gauge is treated as a sensor error and dropped when every other gauge reporting nearby had under 0.05 in in that hour and the hours either side (this caught Redwood City's +0.85 in on Nov 17, 2026). When building the built-in library, two kinds of readings were treated as sensor errors and the storm dropped: one gauge showing 0.5 in or more in an hour while the other two recorded almost nothing (under 0.05 in), which removed Dec 30, 2024; and a channel peak of 4.1 ft or more with less than 0.25 in of rain at every gauge, which removed Sep 25, 2023.</li>
+                <li>Recent hours use the county feed's hourly totals, which update every 10–15 minutes; older hours use the archive. Forecast rain is always a dark-blue bar and measured rain a teal bar drawn over it, so the teal fills the blue as rain falls; if the rain beats the forecast, the teal rises past it and a dark-blue outline inside the teal shows the forecast amount. Past hours keep the forecast made just before they started (from this browser's saved forecasts). Storm replays show archived HRRR for the built-in storms; note that the archive holds the very-short-range forecast (the hour or two before), which was usually closer to what fell than forecasts made hours ahead. For the rating, the current hour counts the rain so far plus the forecast for the rest of the hour. While it's raining, the page re-checks the county feed every 5 minutes.</li>
+                <li>Gauge readings are grouped into hour-long bins starting on the hour (rain summed, channel level = highest reading). The gauge archive is checked at most every 20 minutes (every 2 minutes with Refresh); if it doesn't answer, the last saved copy from the past 24 hours is used.</li>
+                <li>Labels, logged storms and settings are saved in each person's own browser. They don't sync between devices or people.</li>
+            </ul>
+        </div>
+        </div>
+    </section>
+
+    <!-- Sources -->
+    <section class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl space-y-3 text-xs text-slate-400">
+        <h2 class="text-lg font-semibold text-slate-200">Data sources</h2>
+        <div class="grid md:grid-cols-2 gap-5">
+        <div>
+            <h3 class="font-semibold text-slate-300 mb-1">Live data and forecasts</h3>
+            <ul class="list-disc pl-5 space-y-1">
+                <li><a class="text-sky-300 hover:underline" href="https://oneshorelinesmc.github.io/oneshorelinefews/" target="_blank" rel="noopener">OneShoreline Flood Early Warning System</a> (San Mateo County): Atherton Channel at Caltrain gauge (rain, channel level, county thresholds), every ~15 min.</li>
+                <li><a class="text-sky-300 hover:underline" href="https://mesonet.agron.iastate.edu/request/dcp/fe.phtml" target="_blank" rel="noopener">Iowa Environmental Mesonet, NWS HADS archive</a>: hourly history for gauges ACUC1 (Caltrain), RWCC1 (Redwood City) and PAAC1 (Palo Alto).</li>
+                <li><a class="text-sky-300 hover:underline" href="https://open-meteo.com/en/docs" target="_blank" rel="noopener">Open-Meteo</a>: NOAA HRRR rain forecast (15-minute output for the next ~18 h, hourly after).</li>
+                <li><a class="text-sky-300 hover:underline" href="https://tidesandcurrents.noaa.gov/stationhome.html?id=9414523" target="_blank" rel="noopener">NOAA Tides &amp; Currents, Redwood City 9414523</a>: measured tide and tide predictions; <a class="text-sky-300 hover:underline" href="https://tidesandcurrents.noaa.gov/ofs/sfbofs/sfbofs.html" target="_blank" rel="noopener">SF Bay Operational Forecast System</a> for surge.</li>
+                <li><a class="text-sky-300 hover:underline" href="https://www.weather.gov/documentation/services-web-api" target="_blank" rel="noopener">National Weather Service API</a>: active alerts for this location.</li>
+            </ul>
+        </div>
+        <div>
+            <h3 class="font-semibold text-slate-300 mb-1">Drainage map and background</h3>
+            <ul class="list-disc pl-5 space-y-1">
+                <li><a class="text-sky-300 hover:underline" href="https://services.arcgis.com/yq3FgOI44hYHAFVZ/arcgis/rest/services/Stormwater/FeatureServer" target="_blank" rel="noopener">San Mateo County Storm Water Dataset</a>: storm drains, outfalls, catchments.</li>
+                <li><a class="text-sky-300 hover:underline" href="https://smcgov.org/publicworks/athlone-terrace-pump-station-trash-capture-device-project" target="_blank" rel="noopener">County: Athlone Terrace Pump Station trash capture project</a>, <a class="text-sky-300 hover:underline" href="https://www.smcgov.org/media/146008/download" target="_blank" rel="noopener">bid Q&amp;A</a> (48-inch influent pipe) and <a class="text-sky-300 hover:underline" href="https://ceqanet.lci.ca.gov/2023120167" target="_blank" rel="noopener">CEQA notice 2023120167</a> (station location).</li>
+                <li><a class="text-sky-300 hover:underline" href="http://www.co.sanmateo.ca.us/bos.dir/BOSAgendas/agendas2002/agenda20020416/20020416_m_37.htm" target="_blank" rel="noopener">Board of Supervisors, Athlone Way Storm Drain Rehabilitation (2002)</a>.</li>
+                <li><a class="text-sky-300 hover:underline" href="https://www.smcgov.org/media/153135/download" target="_blank" rel="noopener">County: 18th Avenue road improvement options (2025)</a>; <a class="text-sky-300 hover:underline" href="https://oneshoreline.org/?p=1329" target="_blank" rel="noopener">OneShoreline: Bayfront Canal &amp; Atherton Channel project</a>.</li>
+                <li><a class="text-sky-300 hover:underline" href="https://apps.nationalmap.gov/epqs/" target="_blank" rel="noopener">USGS 3DEP Elevation Point Query Service</a>: ground elevations (ft NAVD88). <a class="text-sky-300 hover:underline" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors: street lines.</li>
+                <li>Flood outcomes: photos and reports from Athlone Terrace residents.</li>
+            </ul>
+        </div>
+        </div>
+        <details class="text-xs text-slate-500"><summary class="cursor-pointer text-slate-400">Version <span id="appVersion"></span>: change history</summary>
+            <ul class="list-disc pl-5 mt-1 space-y-0.5">
+                <li><b>2.30</b> (Nov 17, 2026): expandable Storm discussion under the title: a written read of the upcoming storm (trends, tide timing, observations, uncertainty, what to do), updated when storms are coming.</li>
+                <li><b>2.29</b> (Nov 17, 2026): gauge spikes are removed live, not just in the built-in library (Redwood City jumped 0.85 in with no rain on Nov 17, which made the page switch to that gauge and show rain that never fell); unlabeled logged storms that turn out to be spikes are removed.</li>
+                <li><b>2.28</b> (Nov 16, 2026): the channel dot now sits at the hour of the latest actual reading (it was always drawn at the current hour); the line after it is dashed to show the level is carried forward, not newly reported.</li>
+                <li><b>2.27</b> (Nov 16, 2026): the live chart's channel line uses the gauge's individual readings from the county feed (the archive mostly had only the twice-daily check-ins), carries the level forward between readings, and marks the latest reading with a dot.</li>
+                <li><b>2.26</b> (Nov 16, 2026): channel tiles explain an old "last report" time (the gauge only reports when the level changes).</li>
+                <li><b>2.25</b> (Nov 16, 2026): where rain beat the forecast, the forecast amount is shown as a dark-blue outline inside the teal bar (replaces the tick).</li>
+                <li><b>2.24</b> (Nov 16, 2026): forecast (dark blue) and measured (teal) bars are solid so they no longer blend; where measured rain covers the forecast, a dark-blue tick marks the forecast level.</li>
+                <li><b>2.23</b> (Nov 16, 2026): logged storms from before forecasts were being saved (e.g. Nov 13 and 15) fetch archived HRRR the first time they are replayed, so they show forecast bars too.</li>
+                <li><b>2.22</b> (Nov 16, 2026): forecast rain is the same blue everywhere, with measured rain in teal drawn over it; storm replays now show the forecast too (archived HRRR for the built-in storms, this browser's saved forecasts for logged ones).</li>
+                <li><b>2.21</b> (Nov 16, 2026): measured rain fills the forecast bar as it falls (and overflows it if it beats the forecast); past hours keep the forecast made just before they started, so each hour shows forecast vs. fallen.</li>
+                <li><b>2.20</b> (Nov 16, 2026): live "so far this hour" rain bar that becomes a normal bar when the hour ends; recent hours from the county feed instead of the slower archive; feed re-checked every 5 minutes while it rains. Fixes a double count: the current-hour bar used the last 60 minutes, which overlapped the previous hour.</li>
+                <li><b>2.19</b> (Nov 16, 2026): a measured burst of 0.40 in or more in the last hour raises the rating to at least YELLOW; the risk card shows what a 3× forecast miss would mean; a complete live-data failure shows a neutral "NO LIVE DATA" state and keeps retrying (it used to show the Dec 2022 replay and stop auto-refreshing).</li>
+                <li><b>2.18</b> (Nov 16, 2026): bias factor checked against archived HRRR for the library storms (1.25 kept: median 1.30, very wide spread); the page now logs its own 3–6 h forecasts and learns a bias factor from them, shown in Model Settings. The forecast log is included in Export.</li>
+                <li><b>2.17</b> (Nov 16, 2026): larger text throughout (15% bigger by default, including the chart and the drainage map), plus a Text size control (normal / large / larger) that is remembered on each device.</li>
+                <li><b>2.16</b> (Nov 15, 2026): the rating strip moved below the plot, along the time axis, so it no longer covers the rain bars.</li>
+                <li><b>2.15</b> (Nov 15, 2026): color-coded key under the chart (swatches for every series, the county lines, daylight/night and the rating strip).</li>
+                <li><b>2.14</b> (Nov 15, 2026): returning to the tab refreshes immediately if the live data is more than 10 minutes old.</li>
+                <li><b>2.13</b> (Nov 15, 2026): page icon (a house with water at its base); in live mode the water takes the current rating color, so the browser tab shows the risk at a glance.</li>
+                <li><b>2.12</b> (Nov 14, 2026): a logged storm is marked complete only when fresh gauge data shows 6 dry hours (a saved copy of the archive can no longer close a storm early).</li>
+                <li><b>2.11</b> (Nov 13, 2026): channel tiles renamed "Atherton Channel @ Caltrain" and "Atherton Channel @ Alameda" so they line up (details on hover).</li>
+                <li><b>2.10</b> (Nov 13, 2026): channel bars use the county's own threshold colors; the Alameda gauge's fourth level ("Roadway Flooded", 10.4 ft) is purple instead of falling back to yellow.</li>
+                <li><b>2.9</b> (Nov 13, 2026): Refresh always responds (it was disabled while a slow load was still running), shows "Refreshing…", and bypasses the browser cache; the page refreshes itself every 10 minutes while it is open and visible.</li>
+                <li><b>2.8</b> (Nov 13, 2026): the gauge archive is retried once after 5 s and, if it still fails, the last saved copy (up to 24 h old) is used; Refresh re-fetches it at most every 2 minutes (the archive limits how often one address can ask).</li>
+                <li><b>2.7</b> (Nov 13, 2026): if Open-Meteo is slow or down, the dashboard uses the last forecast it saved (up to 12 h old) or, failing that, stays live with measured rain, channel and tide and says the forecast is missing, instead of switching to a historical replay. Forecast requests run in parallel with a 45 s limit.</li>
+                <li><b>2.6</b> (Nov 13, 2026): the rain forecast uses HRRR's 15-minute output where available (about the next 18 hours), summed into hours. On Nov 13 the hourly HRRR series put the burst an hour earlier than the 15-minute output and Windy did.</li>
+                <li><b>2.5</b> (Nov 13, 2026): default thresholds raised to 0.30 / 0.50 / 0.75 / 0.90 / 1.30 in per 3 h (were 0.15 / 0.25 / 0.40 / 0.80 / 1.30), which rated nearly every storm as garage-level.</li>
+                <li><b>2.4</b> (Nov 13, 2026): Export / Import buttons in the storm library save your labels and auto-logged storms to a file and load them back.</li>
+                <li><b>2.3</b> (Nov 13, 2026): channel tiles get a bar showing the level against the county Monitoring / Watch / Warning bands; rain tiles say "at X threshold" (rain only) instead of implying a street outcome.</li>
+                <li><b>2.2</b> (Nov 13, 2026): live gauges color-coded (rain tiles by the 3-hour rating scale, channel tiles by county level); live data retries each source once with a longer timeout; tide data no longer blocks the live view; the status line names any source that failed.</li>
+                <li><b>2.1</b> (Nov 12, 2026): replays and the library's "Model predicts" column now apply the channel bump (county Monitoring / Watch / Warning → at least Blue / Green / Yellow), matching the live rating. Before this they used rain only.</li>
+                <li><b>2.0</b> (Nov 12, 2026): five street levels (sidewalk, yard, garage, garage +, structure); rule-based storm library (21 storms, Sep 2022 – Oct 2026); Feb 2026 Caltrain rain recovered; drainage map, rules and sources added.</li>
+                <li><b>1.x</b> (Nov 10–11, 2026): three-level scale (curb, yard, structure); hand-picked storm library.</li>
+            </ul></details>
+        <p class="text-xs text-slate-500">Built with <a class="text-sky-300 hover:underline" href="https://www.chartjs.org/" target="_blank" rel="noopener">Chart.js</a> and <a class="text-sky-300 hover:underline" href="https://tailwindcss.com/" target="_blank" rel="noopener">Tailwind CSS</a>. All data sources are free and public; no account or key is needed.</p>
+    </section>
+</div>
+
+<script>
+// =================================================================
+// SITE CONFIG
+// =================================================================
+const LAT = 37.477, LON = -122.192, STATION = '9414523';   // Athlone Way, North Fair Oaks
+const TZ = 'America%2FLos_Angeles';
+const GATE_DATE = '2024-11-01';          // county flap gate installed Nov 2024
+const NAVD_OFFSET = 1.18;                // NOAA 9414523: NAVD88 = MLLW − 1.18 ft
+const STREET_NAVD = 21;                  // USGS 3DEP ground elevation on Athlone Way
+const VERSION = '2.30 (Nov 17, 2026)';
+// Text size: the page is rem-based, so one root percentage scales everything; the chart and map follow it
+const uiScale = () => (storageGet('athlone_textsize', 115)) / 100;
+function applyTextSize() {
+    const pct = storageGet('athlone_textsize', 115);
+    document.documentElement.style.setProperty('--ui-scale', pct + '%');
+    document.querySelectorAll('.tsBtn').forEach(b => { const on = +b.dataset.size === pct; b.classList.toggle('bg-sky-700', on); b.classList.toggle('text-white', on); });
+    const f = document.getElementById('mapFrame');
+    try { if (f?.contentDocument?.body) { f.contentDocument.documentElement.style.zoom = pct / 100; f.style.height = Math.ceil(f.contentDocument.body.getBoundingClientRect().height) + 24 + 'px'; } } catch (e) { }
+}
+function setTextSize(pct) { storageSet('athlone_textsize', pct); applyTextSize(); if (typeof refreshAll === 'function' && (liveCache || currentMode.type !== 'live')) refreshAll(); }
+const IEM_STATION = 'ACUC1';             // NWS HADS id for the county gauge "Atherton - Caltrain"
+const IEM_BACKUPS = [['RWCC1', 'Redwood City gauge (4 km)'], ['PAAC1', 'Palo Alto gauge (8.6 km)']];   // cross-check if the Caltrain rain sensor fails
+const OS_BASE = 'https://raw.githubusercontent.com/OneShorelineSMC/oneshorelinefews/data/';
+const OS_SITES = { caltrain: '41106', alameda: '41107', paloAlto: 'A08506CA' };
+const DEFAULTS = { bias: 1.25, gate: true };
+const DEFAULT_R3 = { sidewalk: 0.30, yard: 0.50, garage: 0.75, garageplus: 0.90, structure: 1.30 };   // in per 3 h; used only where no labeled storm constrains a level
+let CH_THRESH = { monitor: 2.8, watch: 4.1, warning: 5.5 };        // refreshed from the county feed
+const LEVELS = ['none', 'sidewalk', 'yard', 'garage', 'garageplus', 'structure'];
+const RATED = LEVELS.slice(1);
+// Rating colors and names, index = level
+const LV_NAME = ['none', 'sidewalk', 'yard', 'garage', 'garage +', 'structure'];
+const LV_COLOR = [null, '#3b82f6', '#22c55e', '#facc15', '#ef4444', '#a855f7'];
+const LV_TEXTCLS = ['text-slate-400', 'text-blue-400', 'text-green-400', 'text-yellow-300', 'text-red-400', 'text-purple-400'];
+const FC_BAR = '#2563eb', MEAS_BAR = '#2dd4bf';   // solid (no transparency), so the two never blend into a third color   // forecast rain is always this blue; measured always this teal
+const BURST_1H = 0.40, BIG_MISS = 3;   // measured 1-h burst that raises the rating to garage; forecast multiplier for the "if HRRR is low" line
+const LV_MIN_GAP = { yard: 0.05, garage: 0.05, garageplus: 0.05, structure: 0.25 };
+const LEVEL_TEXT = { unknown: "don't know", none: 'none: street wet, sidewalk dry', sidewalk: 'sidewalk: water covers the sidewalk', yard: 'yard: past the sidewalk, short of the garage door', garage: 'garage: reaches the garage door', garageplus: 'garage +: above the garage door base, not inside', structure: 'structure: water inside' };
+const MIN_EVENT = { total: 0.25, r3: 0.15, stage: 2.8 };           // what counts as a storm worth logging
+
+// =================================================================
+// STORM LIBRARY: measured hourly data, local hour bins starting at `start`
+// rain: county gauge ACUC1 (in per hour) · stage: channel gauge height at Caltrain (ft, hourly max)
+// tide: NOAA 9414523 verified hourly height (ft MLLW)
+// =================================================================
+const LIB_DATA = {"s20221107":{"start":"2022-11-07T19:00","rain":[0,0,0,0,0,0,0.04,0.2,0.39,0.28,0.15,0.16,0.04,0,0,0,0.04,0,0,0,0,0,0,0,0,0],"stage":[null,null,null,null,null,null,null,0.06,2.08,2.28,2.38,2.07,1.85,1.33,0.42,0.1,null,null,null,0.06,null,null,null,null,null,null],"tide":[0.13,1.65,3.56,5.3,6.5,7.28,7.2,6.28,4.96,3.52,2.53,2.34,3.19,5.08,6.82,8.26,9.16,9.2,8.42,6.75,4.84,2.97,1.31,0.13,-0.26,0.62],"fc":[0,0,0,0.016,0,0,0,0.071,0.043,0.213,0.087,0.016,0.043,0,0.028,0,0,0,0,0,0,0,0,0,0,0]},"s20221210":{"start":"2022-12-10T00:00","rain":[0,0,0,0,0,0,0.08,0,0,0,0.2,0.23,0.08,0.12,0,0,0.04,0.04,0.04,0,0.04,0.04,0,0.15,0,0.04,0,0.04,0,0.04,0.04,0.04,0.04,0,0,0,0,0,0,0.04,0.08,0,0,0,0.04,0.04,0.08,0.04,0,0.04,0,0,0,0,0,0],"stage":[null,null,0.06,null,null,null,null,null,null,null,0.2,2.5,3.16,2.33,2.15,1.4,0.76,0.44,1.28,1.46,0.76,0.52,0.94,1.16,1.61,1.05,1.37,1.18,0.54,0.55,null,0.66,0.56,null,0.35,0.14,null,null,0.06,null,0.18,1.03,0.92,0.32,0.11,null,0.54,0.88,0.77,0.46,0.25,null,0.13,null,null,null],"tide":[5.21,6.39,7.03,7.07,6.5,5.63,4.65,4.08,4.27,5.34,6.81,8.09,8.86,9.16,8.45,7.09,5.33,3.61,2.05,0.95,0.27,0.47,1.7,3.35,4.91,6.27,7.18,7.49,7.29,6.48,5.58,4.87,4.41,4.72,5.74,6.84,7.96,8.41,8.24,7.2,5.79,4.15,2.64,1.32,0.44,0.13,0.81,2.07,3.63,5.16,6.33,7.14,7.31,6.83,6.01,5.03],"fc":[0,0,0,0,0,0.016,0,0,0,0.028,0.185,0,0.567,0.028,0,0,0,0,0,0,0.213,0,0,0.043,0,0,0,0,0.016,0.157,0.016,0,0,0,0,0,0,0,0,0.126,0,0,0,0,0.028,0.016,0.016,0.016,0,0,0,0,0,0,0,0]},"s20221226":{"start":"2022-12-26T12:00","rain":[0,0,0,0,0,0,0,0.07,0,0,0,0.04,0.08,0.08,0.28,0.04,0.11,0.16,0.2,0.16,0.15,0.04,0,0.04,0,0,0,0,0,0,0],"stage":[null,null,0.06,null,null,null,null,null,0.17,0.06,null,null,null,0.51,1.9,2.83,1.84,2.32,2.66,2.9,3.02,2.91,2.05,1.42,1.1,0.78,0.67,0.51,null,0.3,0.2],"tide":[7.65,8.79,9.15,8.69,7.22,5.25,3.25,1.41,-0.25,-1.29,-0.97,0.57,2.63,4.54,6.27,7.38,8.06,7.99,7.14,5.82,4.4,3.48,3.25,4.43,5.95,7.59,8.45,8.85,8.22,6.83,5.06],"fc":[0,0,0,0,0,0.016,0.055,0,0,0,0,0,0.016,0.055,0.043,0.016,0.016,0.24,0.016,0.114,0.055,0.016,0.016,0,0,0,0,0,0,0,0]},"nye22":{"start":"2022-12-29T12:00","rain":[0,0,0,0,0,0,0.04,0.04,0,0.04,0,0,0,0,0.04,0,0,0,0,0,0,0,0,0.04,0,0,0,0,0.04,0,0.04,0,0,0,0,0,0.04,0.04,0.03,0.04,0.24,0.63,0.47,0.2,0.04,0.08,0.16,0.04,0.23,0.32,0.27,0.16,0.08,0.04,0.04,0.04,0,0,0,0,0,0,0,0,0,0],"stage":[null,null,0.06,null,null,null,null,null,0.6,0.5,null,0.19,null,null,0.36,0.46,0.36,0.15,null,null,null,null,0.26,0.47,0.57,0.47,0.4,0.29,0.19,0.42,null,null,null,0.31,0.2,0.31,0.6,0.7,1.16,1.33,1.28,3.99,6.5,6.36,6.1,5.46,4.5,4.36,4.06,5.2,6.37,6.6,6.38,5.89,4.58,3.41,2.6,2.06,1.75,1.42,1.21,1.1,0.94,0.84,null,null],"tide":[2.6,3.28,4.47,5.76,6.77,7.23,6.98,6.06,4.73,3.23,1.91,1.11,1.13,2.08,3.59,5.29,6.76,7.85,8.43,8.38,7.5,6.23,4.69,3.4,2.38,2.07,2.41,3.36,4.59,5.74,6.5,6.68,6.1,5.13,3.88,2.81,2.09,2.2,3.02,4.5,6.07,7.46,8.58,8.97,8.68,7.54,6.19,4.67,3.42,2.66,2.49,2.4,3.28,4.48,5.71,6.56,7,6.6,5.77,4.66,3.57,2.99,2.98,3.72,5.16,6.54],"fc":[0,0,0,0.043,0.043,0.016,0.016,0.043,0.016,0.016,0,0,0,0.043,0.055,0.126,0.098,0.071,0,0.016,0.028,0,0.043,0.016,0,0,0.016,0.016,0.098,0.055,0.028,0,0,0,0.071,0.016,0.055,0,0.028,0,0.016,0.055,0.028,0.654,0.185,0.185,0.142,0.24,0.114,0.311,0.213,0.016,0.016,0.114,0,0,0,0,0,0,0.142,0,0,0,0,0]},"s20230103":{"start":"2023-01-03T22:00","rain":[0,0,0,0,0,0,0.04,0,0.04,0,0,0,0,0,0.08,0.04,0,0,0.04,0.36,0.15,0.04,0.04,0.08,0,0.08,0,0,0,0,0,0,0,0.04,0,0.12,0.08,0.04,0,0.03,0,0,0,0,0,0,0],"stage":[null,null,null,null,0.06,null,null,null,null,0.17,0.33,0.22,0.12,null,null,0.58,0.68,0.46,0.25,2.87,3.77,3.45,2.39,2.12,1.94,1.64,2.16,2.06,1.5,1.11,0.9,0.7,0.6,null,0.95,1.12,2.86,2.73,2.05,1.84,1.54,1.33,1.12,0.92,0.71,0.61,null],"tide":[6.5,7.13,7.23,6.49,5.5,4.38,3.87,4.16,5.14,6.52,7.89,8.73,9.05,8.7,7.58,5.96,4.25,2.57,1.16,0.41,0.72,1.75,2.96,4.75,6.36,7.56,8.11,7.89,7.06,6.04,4.99,4.55,5.04,6.29,7.67,9.01,9.85,9.91,9.21,7.69,5.84,3.91,2.31,1.07,0.46,0.74,1.81],"fc":[0,0,0,0,0,0,0,0,0.028,0,0,0.016,0,0,0.028,0.016,0,0.028,0.071,0.256,0.043,0,0,0,0,0.622,0,0,0,0,0,0,0,0.354,0,0,0,0,0,0,0,0,0,0,0,0,0]},"jan09_23":{"start":"2023-01-08T14:00","rain":[0,0,0,0,0,0,0,0.04,0.04,0.04,0.08,0.12,0.23,0.12,0.2,0.15,0.16,0.12,0.04,0,0,0,0,0,0,0,0,0,0,0,0],"stage":[0.06,null,null,null,null,null,null,0.38,0.74,0.63,0.73,1.16,2.55,2.93,3.02,4.34,4.45,4.62,4.5,3.76,2.72,2.01,1.57,1.36,1.15,1.02,0.81,0.7,null,0.6,null],"tide":[8.04,6.4,4.63,2.8,1.39,0.52,0.54,1.41,2.67,4.32,5.8,7.05,7.67,7.87,7.4,6.5,5.76,5.08,5.11,5.89,6.79,7.94,8.74,9.02,8.47,7.35,5.7,3.96,2.42,1.29,0.93],"fc":[0,0,0,0,0,0,0.028,0.028,0.016,0.028,0.028,0.071,0.016,0.157,0.114,0.098,0.043,0.016,0.043,0,0,0,0,0,0,0,0,0,0,0,0]},"jan14_23":{"start":"2023-01-13T20:00","rain":[0,0,0,0,0,0,0.04,0.03,0.08,0.16,0.28,0.23,0.2,0,0,0,0,0.04,0,0,0.12,0.08,0,0,0,0.04,0,0,0,0.04,0,0,0,0,0,0.03,0,0,0,0,0.04,0,0,0,0,0.08,0.08,0.12,0.08,0.08,0.04,0.15,0.08,0.16,0.32,0.07,0.04,0,0,0,0,0,0,0],"stage":[0.41,null,0.31,null,null,null,0.24,0.48,1.01,1.73,3.02,4.15,4.49,4.96,4.45,2.91,1.94,1.86,1.76,1.34,1.23,1.34,1.86,1.65,1.42,1.12,1.01,0.91,1.01,null,1.01,0.8,null,null,null,null,1.2,1.1,0.9,0.79,0.68,null,0.58,null,null,0.8,1.15,1.26,1.8,1.98,2.08,1.96,2.84,2.94,4.64,4.95,4.46,3.42,2.68,1.91,1.6,1.29,1.18,0.98],"tide":[3.85,2.91,2.62,2.72,3.46,4.29,5.55,6.64,7.53,8.05,8.15,7.68,6.73,5.68,4.8,4.3,4.05,4.33,5.01,5.65,6.35,6.72,6.48,6.2,5.23,4.35,3.58,3.63,3.77,4.58,5.36,6.42,7.3,8.04,8.31,8.2,7.29,6.13,4.86,3.75,3.14,3.06,3.49,4.16,4.88,5.46,6.09,6.21,5.97,5.5,4.82,4.25,4.2,4.63,5.5,6.69,7.73,8.6,8.92,8.99,8.51,7.41,6.19,4.77],"fc":[0,0,0,0.016,0,0,0,0.071,0.157,0.114,0.339,0.055,0.256,0,0,0,0,0,0,0.098,0.043,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.028,0,0,0,0,0,0,0,0.016,0.028,0.055,0.055,0.114,0.071,0.114,0.098,0.098,0.098,0.197,0.142,0.02,0.028,0,0,0,0,0,0,0]},"s20230309":{"start":"2023-03-09T04:00","rain":[0,0,0,0,0,0,0,0,0.08,0.07,0.04,0,0,0.04,0.16,0.08,0.12,0.08,0.04,0.11,0.28,0.08,0.08,0,0,0,0,0,0,0,0,0],"stage":[null,null,null,null,null,null,null,null,null,0.58,1,0.79,0.34,null,0.76,1.74,2.48,2.62,2.5,2.12,4.68,5.4,5.14,4.54,4.18,3.17,2.22,1.87,1.55,1.24,1.14,1.04],"tide":[5,3.36,1.82,0.96,1.1,2.4,4.01,5.66,6.87,7.47,7.4,6.37,5.03,3.42,2.18,1.3,1.52,2.64,4.19,5.91,7.29,8.15,8.61,8.05,6.8,5.28,3.53,2.15,1.36,1.78,3.08,4.64],"fc":[0,0,0,0,0,0.016,0.016,0.043,0.071,0.126,0.071,0,0.028,0,0.256,0.028,0.016,0.016,0.087,0.055,0.016,0.425,0.016,0.016,0,0.016,0,0,0,0,0.016,0]},"mar12_23":{"start":"2023-03-11T23:00","rain":[0,0,0,0,0,0,0.04,0.15,0.52,0.23,0,0.04,0,0,0,0,0,0,0],"stage":[null,null,null,0.06,null,null,null,0.4,2.62,4.44,4.65,3.47,2.19,1.64,1.32,1.21,1.02,0.81,null],"tide":[4.65,6.05,7.24,7.96,8.06,7.36,6.12,4.49,3,1.59,0.93,1.2,2.12,3.13,4.43,5.43,6.13,6.28,5.96],"fc":[0,0,0,0,0,0.256,0,0,0.114,0,0,0,0,0.185,0,0,0,0,0]},"mar21_23":{"start":"2023-03-21T00:00","rain":[0,0,0,0,0,0,0.07,0.16,0.2,0.08,0.08,0,0.04,0.04,0.07,0.16,0.16,0.08,0.12,0.11,0.08,0.04,0.04,0.04,0,0,0.04,0,0,0,0,0.04,0,0,0,0,0,0,0],"stage":[null,null,null,0.06,null,null,null,0.84,2.08,1.96,1.66,1.4,1.07,null,1.56,2.68,3.96,4.69,4.9,5.13,5.18,4.78,4.56,3.95,3.33,2.63,2.13,1.89,1.78,1.57,1.36,1.16,1.26,1.16,1.06,0.96,0.85,null,0.74],"tide":[8.41,9.1,8.75,7.41,5.59,3.61,2.09,1.63,2.63,4.31,6.29,8.07,9.34,9.57,8.96,7.48,5.03,2.6,0.8,0.38,1.21,3.08,4.92,7.04,8.48,9.41,9.46,8.4,6.63,4.58,2.6,1.3,1.03,2.3,4.02,5.97,7.67,8.77,9.08],"fc":[0,0,0,0,0,0,0.071,0.028,0.087,0.016,0,0,0.098,0.043,0.197,0,0.055,0.016,0.016,0.016,0,0.016,0.016,0.016,0,0.016,0,0,0,0,0,0,0,0,0,0,0,0,0]},"s20231219":{"start":"2023-12-19T16:00","rain":[0,0,0,0,0,0,0,0,0,0,0,0,0.04,0.04,0.24,0.15,0.2,0.12,0.04,0,0,0,0,0,0],"stage":[0.06,null,null,null,null,null,null,null,null,null,null,null,0.06,null,2.22,2.1,1.66,1.66,1.44,1.01,0.38,0.07,null,null,0.06],"tide":[7.01,7.65,7.66,6.88,5.6,4.1,2.77,1.76,1.52,2.1,3.52,5.33,6.84,8.16,8.92,9.13,8.52,7.23,5.68,4.17,3.05,2.53,2.81,3.67,5.05],"fc":[0,0,0,0,0,0,0,0,0,0.126,0,0,0,0.043,0.114,0.016,0,0.453,0,0,0,0,0,0,0]},"s20240121":{"start":"2024-01-21T13:00","rain":[0,0,0,0,0,0,0.04,0.04,0.04,0.04,0.11,0.08,0.16,0.36,0.23,0.47,0.16,0,0,0,0.04,0.08,0,0,0,0,0,0,0],"stage":[null,null,null,0.06,null,null,null,null,0.17,0.64,0.75,1.8,1.69,2.78,3.25,4.38,4.67,3.45,1.79,1.14,0.93,2.04,2.72,1.33,0.8,0.59,0.38,0.31,null],"tide":[3.44,1.97,0.73,0.08,0.4,1.7,3.34,4.95,6.18,7.24,7.42,7.23,6.26,5.43,4.46,4.3,4.88,6.19,7.61,8.77,9.44,9.38,8.43,6.81,4.99,3.19,1.67,0.55,-0.07],"fc":[0,0,0,0,0,0,0.028,0,0.028,0.126,0,0.142,0,0.071,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},"s20241122":{"start":"2024-11-22T04:00","rain":[0,0,0,0,0,0,0.04,0.04,0.16,0.12,0,0.03,0.2,0.24,0.08,0.04,0.04,0.04,0.03,0,0.04,0,0,0,0,0,0],"stage":[0.06,null,null,null,null,null,null,null,1.14,1.03,0.92,0.3,1.38,1.98,1.87,0.85,0.98,0.75,0.65,0.45,0.14,null,null,null,0.06,null,null],"tide":[5.67,6.49,7.05,7.12,6.49,5.56,4.56,3.75,3.53,3.8,4.82,5.81,6.71,6.94,6.79,5.88,4.7,3.45,2.28,1.38,0.89,1.36,2.31,3.79,5.18,6.38,7.25],"fc":[0,0,0.016,0,0,0,0.016,0.028,0.028,0.071,0.016,0.228,0.055,0.283,0.213,0.185,0.126,0,0.028,0,0,0,0,0,0,0,0]},"dec14_24":{"start":"2024-12-13T17:00","rain":[0,0,0,0,0,0,0,0,0,0.39,0.28,0.04,0.08,0.39,0.08,0,0,0.04,0,0,0,0,0,0,0,0.04,0,0,0,0,0,0],"stage":[null,null,null,null,null,null,null,1.76,2.08,1.86,1.55,0.56,1.89,3.43,2.93,1.32,null,null,0.76,1.17,0.84,0.42,0.32,0.11,null,null,null,null,null,null,null,null],"tide":[-1.56,-1.2,0.2,2.21,4.19,5.72,6.85,7.21,7.15,6.05,4.91,3.79,3.25,4.04,5.54,7.51,8.9,10.23,10.7,9.95,8.04,5.66,3.55,1.56,-0.32,-1.41,-1.27,0.08,2.32,4.28,5.96,7.05],"fc":[0,0.004,0.028,0,0.114,0.299,0.213,0.197,0.213,0.327,1.815,0.197,0.055,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},"s20241223":{"start":"2024-12-23T20:00","rain":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.04,0,0.04,0.51,0,0,0,0,0,0],"stage":[null,null,null,null,null,null,null,0.98,0.87,0.14,null,0.78,0.67,0.57,0.25,null,null,null,null,null,0.06,null,null,null,null],"tide":[5.34,4.68,3.9,3.11,2.65,2.63,3.26,4.4,5.74,6.82,7.62,7.92,7.6,6.73,5.69,4.34,3.15,2.19,1.87,1.94,2.64,3.57,4.59,5.32,5.65],"fc":[0,0,0,0,0,0,0.071,0,0.028,0,0.028,0.028,0,0,0.016,0.283,0,0,0,0,0,0,0,0,0]},"feb13_25":{"start":"2025-02-12T12:00","rain":[0,0,0,0,0,0,0.04,0.04,0.12,0.08,0.03,0.08,0.12,0.24,0.43,0.4,0.11,0.08,0.16,0.08,0,0.04,0,0.16,0.19,0.04,0,0.08,0.04,0,0,0.04,0,0.04,0.04,0.04,0,0,0.04,0,0,0,0,0,0],"stage":[null,null,null,null,0.06,null,null,null,null,0.65,0.86,1.08,1.22,1.6,3.62,4.62,4.83,4.52,3.49,2.81,2.68,2.35,1.8,1.93,3.42,3.92,3.08,2.2,2.21,2.02,1.6,1.48,1.96,1.74,null,1.37,1.27,0.96,0.98,1.08,0.76,0.58,null,0.47,null],"tide":[9.04,8.37,6.91,4.95,2.86,1.06,-0.07,-0.23,0.75,2.34,4.01,5.77,7.06,7.7,7.77,6.89,5.67,4.58,3.49,3.24,3.95,5.31,6.86,8.24,9.06,9.04,8.13,6.3,4.5,2.55,1.16,0.56,0.7,2.09,3.69,5.69,7.24,8.2,8.41,7.65,6.29,4.73,3.24,2.42,2.78],"fc":[0,0,0,0,0,0,0.016,0.114,0.185,0.043,0.028,0.055,0.016,0.087,0.016,0.256,0.256,0.142,0.126,0,0,0.016,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},"s20251112":{"start":"2025-11-12T22:00","rain":[0,0,0,0,0,0,0.04,0.12,0.24,0.19,0.08,0.24,0.19,0.04,0.08,0,0,0,0,0.04,0,0,0,0,0,0],"stage":[null,null,null,null,null,null,null,0.06,1.25,2.26,2.15,1.34,2.37,2.14,1.28,0.64,0.53,0.22,null,0.06,null,null,null,null,null,null],"tide":[3.34,1.99,1.24,0.89,1.51,2.76,4.28,5.76,7.08,7.95,8.33,7.9,7.06,5.64,4.42,3.23,2.83,3.18,4.27,5.55,6.71,7.34,7.23,6.44,5.16,3.7],"fc":[0,0,0,0,0.016,0,0.016,0,0.654,0.016,0.016,0.016,0.071,0.028,0.016,0.028,0,0,0,0,0,0,0.028,0,0,0]},"dec24_25":{"start":"2025-12-23T19:00","rain":[0,0,0,0,0,0,0.15,0.06,0.59,0.3,0.01,0,0,0,0,0,0,0,0,0,0,0,0,0.04,0,0.1,0.05,0.01,0.01,0.01,0,0.16,0.04,0.03,0,0,0.01,0,0.13,0,0,0,0,0,0],"stage":[null,null,null,null,null,null,0.84,null,5.71,5.26,2.66,1.42,0.78,0.57,0.36,null,0.26,null,null,null,0.16,null,0.13,0.79,0.68,0.27,0.38,null,0.16,0.29,1.42,1.65,1.55,1.21,0.69,0.37,null,0.16,null,null,null,null,null,null,null],"tide":[1.66,0.77,0.37,1.15,2.47,4.15,5.96,7.07,8.15,8.27,7.96,7.06,5.9,4.94,4.36,4.79,5.84,7.18,8.21,8.74,8.41,7.34,5.83,4.23,2.65,1.57,1.08,1.18,2.32,3.81,5.32,6.49,7.31,8.01,8.14,7.64,6.57,5.38,4.27,3.86,4.39,5.4,6.64,7.64,8.03],"src":"Redwood City gauge (4 km)","fc":[0,0,0.016,0,0,0,0,0,0.087,0,0.028,0,0,0,0,0,0,0,0,0,0,0,0.071,0,0,0.028,0,0,0,0.055,0.071,0.126,0,0,0.028,0,0.016,0,0,0,0,0.256,0,0.016,0]},"s20251225":{"start":"2025-12-25T10:00","rain":[0,0,0,0,0,0,0.04,0.08,0.13,0.3,0.06,0.01,0,0,0,0,0,0,0,0],"stage":[null,null,null,null,null,null,null,1.92,2.55,3.29,2.91,1.67,1.03,0.6,0.4,0.29,0.19,null,null,0.13],"tide":[3.86,4.39,5.4,6.64,7.64,8.03,7.68,6.69,5.39,3.9,2.81,1.88,1.51,1.81,2.88,4.53,6.04,7.23,7.95,8.16],"src":"Redwood City gauge (4 km)","fc":[0,0,0.256,0,0.016,0,0.398,0,0.028,0.016,0,0,0,0,0,0,0,0,0,0]},"jan04_26":{"start":"2026-01-05T06:00","rain":[0,0,0,0,0,0,0,0.04,0.04,0.11,0.2,0.2,0,0,0.04,0,0,0,0.04,0,0,0,0,0,0],"stage":[null,null,null,null,null,null,null,0.19,0.4,1.64,2.41,3.38,3.28,2.34,1.69,1.17,1.06,0.84,0.74,null,0.54,0.43,0.33,0.32,null],"tide":[4.15,3.16,3.23,4.4,6.23,7.97,9.36,9.93,9.58,8.24,6.24,4.14,2.17,0.56,-0.58,-0.57,0.84,2.73,4.86,6.76,8.03,8.54,8.09,6.83,5.28],"fc":[0,0.016,0,0.016,0.043,0.016,0,0,0,0.028,0.157,0.028,0,0,0,0,0,0,0,0,0,0,0,0,0]},"s20260215":{"start":"2026-02-15T13:00","rain":[0,0,0,0,0,0,0.07,0.04,0.04,0.04,0,0.08,0.08,0.08,0.12,0.19,0.08,0.04,0.08,0.08,0.04,0,0.04,0,0.08,0.04,0,0,0,0,0.08,0,0,0,0,0,0.03,0,0,0,0,0.08,0,0.24,0.12,0.16,0.11,0.04,0.04,0.08,0,0.04,0,0.04,0.08,0,0,0,0,0,0,0],"stage":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],"tide":[6.59,4.6,2.85,1.27,0.37,0.19,1.32,2.89,4.74,6.23,7.32,7.86,7.63,6.83,5.61,4.4,3.54,3.64,4.67,6.34,7.94,9.12,9.72,9.33,8.28,6.36,4.46,2.54,1.15,0.28,0.62,1.97,4.05,5.75,7.27,8.06,8.06,7.22,5.96,4.41,3.21,2.65,3.24,4.54,6.6,8.22,9.33,9.6,8.98,7.31,5.35,3.5,1.91,0.84,0.44,1.35,3.01,5.18,6.76,7.95,8.26,7.87],"fc":[0,0,0,0,0,0.126,0.055,0.043,0.016,0.043,0.567,0.016,0,0.055,0.071,0.126,0.016,0.016,0.098,0.055,0.028,0,0.043,0.043,0.016,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.016,0.354,0.197,0.114,0.098,0.016,0.016,0.071,0,0.016,0,0.016,0,0,0,0,0,0,0,0]}};
+const LIB_META = {
+    s20221107: { label: 'Nov 8, 2022' },
+    s20221210: { label: 'Dec 10–12, 2022' },
+    s20221226: { label: 'Dec 27, 2022' },
+    nye22:    { label: 'Dec 31, 2022', impact: 'structure', note: '6" of water in the garage at one house on Athlone Terrace (garage ~12" below the house floor); likely entered via the dryer vent. Worst event in the record.' },
+    s20230103: { label: 'Jan 4, 2023' },
+    jan09_23: { label: 'Jan 9, 2023' },
+    jan14_23: { label: 'Jan 14–16, 2023' },
+    s20230309: { label: 'Mar 9–10, 2023', note: 'Channel peaked at 5.4 ft, third-highest in this record.' },
+    mar12_23: { label: 'Mar 12, 2023', impact: 'garageplus', note: 'Street fully flooded at the 9:46 AM photo, about 3–4" below the Dec 2022 peak; garage stayed dry. The burst ended minutes before the photo.' },
+    mar21_23: { label: 'Mar 21–22, 2023' },
+    s20231219: { label: 'Dec 20, 2023' },
+    s20240121: { label: 'Jan 21–22, 2024' },
+    s20241122: { label: 'Nov 22, 2024' },
+    dec14_24: { label: 'Dec 14, 2024', note: 'Not documented: home, no flood photos (probably not yard-level). First storm after the flap gate.' },
+    s20241223: { label: 'Dec 24, 2024', note: 'Mostly one hour of 0.51 in at the Caltrain gauge; nearby gauges recorded less (Palo Alto 0.36 in, Redwood City 0.14 in for the storm).' },
+    feb13_25: { label: 'Feb 13, 2025', impact: 'garage', note: 'Street flooded up to the base of the garage door at one house on Athlone Terrace.' },
+    s20251112: { label: 'Nov 13, 2025' },
+    dec24_25: { label: 'Dec 24, 2025', impact: 'garage', rainSource: 'Redwood City gauge (4 km)', note: 'Neighbor photos from 3:30–4:00 AM (during the peak hour) show water to about the base of the garage door at one house on Athlone Terrace; houses not islanded. The Caltrain rain sensor missed this storm (0.32 in), so rain is from the Redwood City gauge: a burst of 0.95 in from 2–5 AM. Channel hit 5.71 ft in the 3 AM hour, the second-highest in the record. Police reported flooding on Hamilton Ave at 4:20 AM.' },
+    s20251225: { label: 'Dec 25, 2025', rainSource: 'Redwood City gauge (4 km)', note: 'The Caltrain rain sensor was still under-reading, so rain is from the Redwood City gauge.' },
+    jan04_26: { label: 'Jan 5, 2026' },
+    s20260215: { label: 'Feb 15–17, 2026', note: 'No channel data: the county gauges stopped sending channel levels to the public archive from about Feb 10 to early March 2026. Rain is from the Caltrain gauge (2.36 in; Redwood City 2.55, Palo Alto 2.01).' }
+};
+
+// =================================================================
+// UTILITIES
+// =================================================================
+const pad = n => String(n).padStart(2, '0');
+const parseLocal = ts => new Date(ts.replace(' ', 'T'));
+const hourKey = ts => ts.replace('T', ' ').slice(0, 13);
+const ymd = d => d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate());
+const isoDate = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const localIso = d => `${isoDate(d)}T${pad(d.getHours())}:00`;
+const fmt = (v, d = 2) => (v == null || !isFinite(v)) ? '--' : v.toFixed(d);
+const escapeHtml = v => String(v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const hourLabel = (d, withDate = false) => d.toLocaleDateString('en-US', withDate ? { month: 'short', day: 'numeric' } : { weekday: 'short' }) + ' ' + pad(d.getHours()) + ':00';
+const niceTime = d => d.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+const regimeOf = iso => iso.slice(0, 10) >= GATE_DATE ? 'post' : 'pre';
+const hoursFrom = (startIso, n) => { const t0 = parseLocal(startIso).getTime(); return Array.from({ length: n }, (_, i) => new Date(t0 + i * 3600000)); };
+const floorHour = ms => { const d = new Date(ms); d.setMinutes(0, 0, 0); return d.getTime(); };
+
+async function fetchRaw(url, timeoutMs = 15000) {   // Promise.race timeout: AbortSignal can't cross proxied previews
+    let timer;
+    const timeout = new Promise((_, rej) => { timer = setTimeout(() => { const e = new Error('timeout'); e.name = 'AbortError'; rej(e); }, timeoutMs); });
+    try { return await Promise.race([fetch(url, { cache: 'no-store' }), timeout]); } finally { clearTimeout(timer); }
+}
+async function fetchJson(url, timeoutMs = 25000, tries = 2) {
+    let lastErr;
+    for (let k = 0; k < tries; k++) {
+        try {
+            const res = await fetchRaw(url, timeoutMs);
+            const data = await res.json();
+            if (!res.ok || data.error) throw new Error(data.reason || data.error?.message || ('HTTP ' + res.status));
+            return data;
+        } catch (e) { lastErr = e; if (k < tries - 1) await new Promise(r => setTimeout(r, 1500)); }
+    }
+    throw lastErr;
+}
+const errText = e => e?.name === 'AbortError' ? 'timed out' : (e?.message || String(e));
+function storageGet(key, fallback) { try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; } catch (e) { return fallback; } }
+function storageSet(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); return true; } catch (e) { return false; } }
+
+// Sunrise/sunset (NOAA sunrise equation, ±2 min)
+const sunCache = {};
+function sunTimes(date) {
+    const key = isoDate(date);
+    if (sunCache[key]) return sunCache[key];
+    const r = Math.PI / 180, s = x => Math.sin(x * r);
+    const n = Math.round(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 12) / 864e5 + 2440587.5 - 2451545);
+    const J = n - LON / 360, M = (357.5291 + 0.98560028 * J) % 360;
+    const C = 1.9148 * s(M) + 0.02 * s(2 * M) + 0.0003 * s(3 * M);
+    const L = (M + C + 282.9372) % 360, Jt = 2451545 + J + 0.0053 * s(M) - 0.0069 * s(2 * L);
+    const dec = Math.asin(s(L) * s(23.44));
+    const H = Math.acos((s(-0.833) - s(LAT) * Math.sin(dec)) / (Math.cos(LAT * r) * Math.cos(dec))) / r;
+    const toMs = j => (j - 2440587.5) * 864e5;
+    return (sunCache[key] = { rise: toMs(Jt - H / 360), set: toMs(Jt + H / 360) });
+}
+
+// =================================================================
+// COUNTY GAUGE ARCHIVE (Iowa Environmental Mesonet, NWS HADS)
+// =================================================================
+// Returns { [hourStartMs]: {rain, stage} } in local hour bins. Rain from the accumulator, counting only new highs
+// (the counter jitters ±0.01); a drop of more than 1 in is treated as a counter reset.
+async function fetchIem(fromMs, toMs) {
+    const iso = ms => new Date(ms).toISOString().slice(0, 16) + 'Z';
+    const stations = [IEM_STATION, ...IEM_BACKUPS.map(b => b[0])];
+    const res = await fetchRaw(`https://mesonet.agron.iastate.edu/cgi-bin/request/hads.py?${stations.map(s => 'stations=' + s).join('&')}&sts=${iso(fromMs - 3600000)}&ets=${iso(toMs)}&delim=comma&what=txt`, 30000);
+    const txt = await res.text();
+    if (/too many requests/i.test(txt)) throw new Error('gauge archive busy (rate limited), try again in a few minutes');
+    const lines = txt.trim().split(/\r?\n/);
+    const hdr = lines[0].split(','), iT = hdr.indexOf('utc_valid');
+    if (iT < 0) throw new Error('unexpected gauge archive response');
+    const pcCols = hdr.map((h, i) => [h, i]).filter(([h]) => /^PC/.test(h)).sort((x, y) => (/^PCIRR/.test(y[0]) ? 1 : 0) - (/^PCIRR/.test(x[0]) ? 1 : 0)).map(x => x[1]);
+    const hgCols = hdr.map((h, i) => [h, i]).filter(([h]) => /^HG/.test(h)).map(x => x[1]);
+    // Feb 2026: the Caltrain gauge sent its running rain total under PPU instead of PC for weeks.
+    // Use PPU only where a station has had no PC reading for more than 12 h (mixing the two nearby double-counts).
+    const ppuCols = hdr.map((h, i) => [h, i]).filter(([h]) => /^PPU/.test(h)).map(x => x[1]);
+    const pcTimes = {};
+    lines.slice(1).forEach(l => { const r = l.split(','); if (pcCols.some(i => r[i] !== '' && r[i] != null)) (pcTimes[r[0]] ??= []).push(Date.parse(r[iT].replace(' ', 'T') + 'Z')); });
+    const nearPc = (st, ts) => { const a = pcTimes[st]; if (!a) return Infinity; let lo = 0, hi = a.length - 1; while (lo < hi) { const m = (lo + hi) >> 1; if (a[m] < ts) lo = m + 1; else hi = m; } return Math.min(Math.abs(a[lo] - ts), lo > 0 ? Math.abs(ts - a[lo - 1]) : Infinity); };
+    const out = {}, runMax = {};
+    stations.forEach(st => out[st] = {});
+    lines.slice(1).map(l => l.split(',')).forEach(r => {
+        const st = r[0]; if (!out[st]) return;
+        const ts = Date.parse(r[iT].replace(' ', 'T') + 'Z'); if (isNaN(ts)) return;
+        const h = floorHour(ts), b = (out[st][h] ??= { rain: 0, stage: null });
+        let ip = pcCols.find(i => r[i] !== '' && r[i] != null);
+        if (ip == null && nearPc(st, ts) > 12 * 3600000) ip = ppuCols.find(i => r[i] !== '' && r[i] != null && +r[i] >= 1);
+        if (ip != null) {
+            const v = parseFloat(r[ip]);
+            if (!isNaN(v)) {
+                if (runMax[st] == null || v < runMax[st] - 1) runMax[st] = v;
+                else if (v > runMax[st]) { if (ts >= fromMs) b.rain += v - runMax[st]; runMax[st] = v; }
+            }
+        }
+        const ih = hgCols.find(i => r[i] !== '' && r[i] != null);
+        if (ih != null) { const v = parseFloat(r[ih]); if (!isNaN(v) && v <= 12) b.stage = b.stage == null ? v : Math.max(b.stage, v); }
+    });
+    removeRainSpikes(out);
+    return out;   // { ACUC1: {hourMs:{rain,stage}}, RWCC1: {...}, PAAC1: {...} }
+}
+// A gauge occasionally jumps its running total with no rain (Redwood City +0.85 in at 10 AM on Nov 17, 2026; Caltrain
+// +3.38 in on Mar 2, 2026). Drop an hour of 0.5 in or more at one gauge when every other gauge that was reporting
+// nearby recorded under 0.05 in in the hour before, during and after.
+function removeRainSpikes(multi) {
+    const sts = Object.keys(multi), H = 3600000;
+    Object.defineProperty(multi, '_spikes', { value: [], enumerable: false, writable: true });
+    sts.forEach(st => Object.entries(multi[st]).forEach(([k, b]) => {
+        const h = +k; if (!(b?.rain >= 0.5)) return;
+        const others = sts.filter(o => o !== st && Object.keys(multi[o]).some(x => Math.abs(+x - h) <= 2 * H));
+        if (!others.length) return;   // nobody to compare with: keep it
+        if (others.every(o => [h - H, h, h + H].reduce((t, x) => t + (multi[o][x]?.rain || 0), 0) < 0.05)) {
+            multi._spikes.push({ station: st, hour: h, rain: +b.rain.toFixed(2) }); b.rain = 0;
+        }
+    }));
+    return multi;
+}
+
+// Pick the rain record for a set of hours: Caltrain unless its sensor reads far below a neighboring gauge
+// (it missed the Dec 24, 2025 storm entirely while its own channel hit 5.7 ft).
+function chooseRain(multi, hours) {
+    const sum = st => hours.reduce((a, h) => a + (multi[st]?.[h]?.rain || 0), 0);
+    const primary = sum(IEM_STATION);
+    for (const [st, name] of IEM_BACKUPS) {
+        const t = sum(st);
+        if (t >= 0.3 && primary < 0.4 * t) return { station: st, source: name, rain: hours.map(h => +(multi[st]?.[h]?.rain || 0).toFixed(2)), primary, backup: t };
+    }
+    return { station: IEM_STATION, source: null, rain: hours.map(h => +(multi[IEM_STATION]?.[h]?.rain || 0).toFixed(2)), primary };
+}
+
+async function fetchTideRange(fromMs, toMs) {
+    const noaa = `https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?station=${STATION}&datum=MLLW&time_zone=lst_ldt&units=english&application=athlone_dashboard&format=json&begin_date=${ymd(new Date(fromMs))}&end_date=${ymd(new Date(toMs))}`;
+    let d = await fetchJson(noaa + '&product=hourly_height').catch(() => null);
+    if (!d?.data?.length) d = await fetchJson(noaa + '&product=water_level').catch(() => ({ data: [] }));
+    const by = {};
+    (d.data || []).forEach(p => { if (p.t.endsWith(':00') && p.v !== '') by[hourKey(p.t)] = +parseFloat(p.v).toFixed(2); });
+    return by;
+}
+
+// =================================================================
+// STORM METRICS + CALIBRATION
+// =================================================================
+function rolling(arr, w) { let s = 0; return arr.map((v, i) => { s += v || 0; if (i >= w) s -= arr[i - w] || 0; return Math.max(0, s); }); }
+function argmax(arr) { let bi = -1, bv = -Infinity; arr.forEach((v, i) => { if (v != null && v > bv) { bv = v; bi = i; } }); return bi; }
+
+function stormMetrics(ev) {
+    const r3 = rolling(ev.rain, 3), r24 = rolling(ev.rain, 24);
+    const times = hoursFrom(ev.start, ev.rain.length);
+    const i3 = argmax(r3), iS = argmax(ev.stage), i1 = argmax(ev.rain);
+    const tides = (ev.tide || []).filter(v => v != null);
+    return {
+        r1: ev.rain[i1] ?? 0, r3: r3[i3] ?? 0, r24: Math.max(0, ...r24), total: ev.rain.reduce((s, v) => s + (v || 0), 0),
+        r3At: i3 >= 0 ? new Date(times[i3].getTime() - 2 * 3600000) : null,   // start of the hardest 3 hours
+        stage: iS >= 0 ? ev.stage[iS] : null, stageAt: iS >= 0 ? times[iS] : null,
+        tide: tides.length ? Math.max(...tides) : null
+    };
+}
+
+function getLabels() {
+    let labels = storageGet('athlone_labels2', null);
+    if (!labels) {   // one-time migration from the old 3-level scale (curb / yard / structure)
+        const old = storageGet('athlone_labels', {}), map = { curb: 'garage', yard: 'garageplus', structure: 'structure', none: 'none', unknown: 'unknown' };
+        labels = {}; Object.entries(old).forEach(([k, v]) => { if (map[v]) labels[k] = map[v]; });
+        storageSet('athlone_labels2', labels);
+    }
+    return labels;
+}
+function getAutoEvents() { return storageGet('athlone_events', []); }
+
+// Every storm in the library with its effective label
+function allStorms() {
+    const labels = getLabels();
+    const list = Object.entries(LIB_DATA).map(([id, d]) => ({ id, kind: 'archive', ...d, ...LIB_META[id] }));
+    getAutoEvents().forEach(e => list.push({ ...e }));
+    list.forEach(s => {
+        s.impact = labels[s.id] ?? s.impact ?? 'unknown';
+        s.regime = regimeOf(s.start);
+        s.m = stormMetrics(s);
+        if (!s.label) s.label = niceTime(parseLocal(s.start));
+    });
+    return list.sort((a, b) => parseLocal(b.start) - parseLocal(a.start));
+}
+
+function calibrate(gate) {
+    const regime = gate ? 'post' : 'pre';
+    const ev = allStorms().filter(s => s.impact !== 'unknown' && !s.rainSuspect && s.status !== 'in-progress').map(s => ({ x: s.m.r3, impact: s.impact, regime: s.regime }));
+    const thresh = {}, notes = {};
+    RATED.forEach((name, k) => {
+        const lvl = k + 1;
+        const belowPool = gate ? ev : ev.filter(e => e.regime === 'pre');
+        const below = belowPool.filter(e => LEVELS.indexOf(e.impact) < lvl).map(e => e.x);
+        const above = ev.filter(e => e.regime === regime && LEVELS.indexOf(e.impact) >= lvl).map(e => e.x);
+        const lo = below.length ? Math.max(...below) : null, hi = above.length ? Math.min(...above) : null;
+        if (lo != null && hi != null && lo < hi) { thresh[name] = (lo + hi) / 2; notes[name] = `between ${lo.toFixed(2)} and ${hi.toFixed(2)}`; }
+        else if (lo != null && hi != null) { thresh[name] = (lo + hi) / 2; notes[name] = `⚠ labels conflict (${lo.toFixed(2)} ≥ ${hi.toFixed(2)})`; }
+        else if (lo != null) { thresh[name] = Math.max(lo * 1.1, lo + 0.05); notes[name] = `lower bound only (> ${lo.toFixed(2)}; not yet seen${gate ? ' with gate' : ''})`; }
+        else if (hi != null) { thresh[name] = Math.min(DEFAULT_R3[name], hi * 0.9); notes[name] = `≤ ${hi.toFixed(2)} (default)`; }
+        else { thresh[name] = DEFAULT_R3[name]; notes[name] = 'default guess'; }
+    });
+    RATED.forEach((name, k) => { if (k) thresh[name] = Math.max(thresh[name], thresh[RATED[k - 1]] + LV_MIN_GAP[name]); });
+    const unobserved = RATED.filter(n => notes[n].startsWith('lower bound'));
+    return { thresh, notes, regime, unobserved };
+}
+const levelFor = (r3, t) => { let lv = 0; RATED.forEach((n, k) => { if (r3 >= t[n]) lv = k + 1; }); return lv; };
+const CH_TEXTCLS = ['text-slate-300', 'text-yellow-400', 'text-orange-400', 'text-red-400', 'text-purple-400'];   // county channel levels: same colors as the chart's threshold lines
+const CH_TO_LV = [0, 1, 2, 3];   // county Monitoring / Watch / Warning raise the rating to at least Sidewalk / Yard / Garage
+const stageLevelOf = v => v == null ? 0 : v >= CH_THRESH.warning ? 3 : v >= CH_THRESH.watch ? 2 : v >= CH_THRESH.monitor ? 1 : 0;
+
+// =================================================================
+// SETTINGS
+// =================================================================
+function getSettings() {
+    const s = storageGet('athlone_settings', {});
+    return { bias: typeof s.bias === 'number' ? s.bias : DEFAULTS.bias, gate: typeof s.gate === 'boolean' ? s.gate : DEFAULTS.gate };
+}
+function saveSettings() {
+    const bias = parseFloat(document.getElementById('setBias').value), gate = document.getElementById('setGate').checked;
+    storageSet('athlone_settings', { bias: isNaN(bias) ? getSettings().bias : bias, gate });
+    refreshAll();
+}
+
+// =================================================================
+// BIAS LEARNER: compares what HRRR forecast 3-6 h ahead with what the gauge then measured.
+// Log (athlone_fc_log): { slotMs: { f: raw HRRR in/h, lead: h, mA: Caltrain in/h, mR: Redwood City in/h } }
+// Events are chosen on forecast OR measured rain, so busts in both directions count (choosing only storms
+// that turned out wet would make HRRR look worse than it is).
+// =================================================================
+const FC_LOG_KEY = 'athlone_fc_log', LEARN_MIN_EVENTS = 8;
+function logForecastSlots(omBy, nowBin) {
+    const log = storageGet(FC_LOG_KEY, {}), now = Date.now();
+    Object.entries(omBy).forEach(([k, v]) => {
+        const slot = +k, lead = (slot - now) / 3600000;
+        if (v == null || lead < 0) return;
+        if (lead < 24) log[slot] = { ...(log[slot] || {}), fLast: +(+v).toFixed(3) };   // newest forecast made before the hour starts (for the chart)
+        if (lead < 3 || lead >= 6) return;
+        const e = log[slot] || {};
+        if (e.f == null || Math.abs(lead - 4.5) < Math.abs((e.lead ?? 99) - 4.5)) log[slot] = { ...e, f: +(+v).toFixed(3), lead: +lead.toFixed(2) };
+    });
+    const cutoff = now - 150 * 864e5; Object.keys(log).forEach(k => { if (+k < cutoff) delete log[k]; });
+    storageSet(FC_LOG_KEY, log);
+}
+function logMeasuredSlots(multi, nowBin) {
+    if (!multi) return;
+    const log = storageGet(FC_LOG_KEY, {}); let changed = false;
+    Object.keys(log).forEach(k => {
+        const slot = +k; if (slot >= nowBin - 3600000) return;   // archive runs ~45 min behind: only finished hours
+        const a = multi.ACUC1?.[slot]?.rain, r = multi.RWCC1?.[slot]?.rain;
+        const hasA = multi.ACUC1 && Object.keys(multi.ACUC1).some(h => +h >= slot), hasR = multi.RWCC1 && Object.keys(multi.RWCC1).some(h => +h >= slot);
+        if (hasA && log[k].mA == null) { log[k].mA = +(a ?? 0).toFixed(3); changed = true; }
+        if (hasR && log[k].mR == null) { log[k].mR = +(r ?? 0).toFixed(3); changed = true; }
+    });
+    if (changed) storageSet(FC_LOG_KEY, log);
+}
+function learnBias(log = storageGet(FC_LOG_KEY, {})) {
+    const hrs = Object.keys(log).map(Number).filter(k => log[k].f != null && log[k].mA != null).sort((a, b) => a - b);
+    const events = []; let cur = null, lastWet = -Infinity;
+    hrs.forEach(h => {
+        const e = log[h], wet = e.f >= 0.02 || e.mA >= 0.02 || (e.mR ?? 0) >= 0.02;
+        if (!wet) return;
+        if (!cur || h - lastWet > 6 * 3600000) { cur = { hours: [] }; events.push(cur); }
+        cur.hours.push(h); lastWet = h;
+    });
+    const res = [];
+    events.forEach(ev => {
+        const a = ev.hours[0], b = ev.hours[ev.hours.length - 1], slots = [];
+        for (let h = a; h <= b; h += 3600000) slots.push(log[h] || {});
+        const have = slots.filter(x => x.f != null && x.mA != null).length;
+        if (have < Math.max(3, 0.7 * slots.length)) return;   // too many hours without both a forecast and a measurement
+        const sumA = slots.reduce((t, x) => t + (x.mA || 0), 0), sumR = slots.reduce((t, x) => t + (x.mR || 0), 0);
+        const useR = sumR >= 0.3 && sumA < 0.4 * sumR;   // same backup-gauge rule as the rest of the dashboard
+        const peak = arr => { let p = 0; arr.forEach((_, i) => { p = Math.max(p, (arr[i] || 0) + (arr[i - 1] || 0) + (arr[i - 2] || 0)); }); return p; };
+        const m3 = peak(slots.map(x => useR ? x.mR : x.mA)), f3 = peak(slots.map(x => x.f));
+        if (Math.max(m3, f3) < 0.2) return;
+        res.push({ start: a, m3: +m3.toFixed(2), f3: +f3.toFixed(2), ratio: Math.max(m3, 0.02) / Math.max(f3, 0.05), gauge: useR ? 'Redwood City' : 'Caltrain' });
+    });
+    if (!res.length) return { n: 0, events: res };
+    const logs = res.map(r => Math.log(r.ratio)).sort((x, y) => x - y), mid = logs.length >> 1;
+    const med = logs.length % 2 ? logs[mid] : (logs[mid - 1] + logs[mid]) / 2;
+    return { n: res.length, factor: +Math.min(4, Math.max(0.5, Math.exp(med))).toFixed(2), events: res };
+}
+function useLearnedBias() { const L = learnBias(); if (L.factor) { storageSet('athlone_settings', { ...getSettings(), bias: L.factor }); refreshAll(); } }
+
+function resetSettings() { storageSet('athlone_settings', {}); refreshAll(); }
+
+function renderSettings(cal, s) {
+    document.getElementById('setBias').value = s.bias.toFixed(2);
+    const L = learnBias(), lb = document.getElementById('learnedBias');
+    if (lb) lb.innerHTML = !L.n ? 'Learned from this browser: no rain events logged yet. The page records what HRRR forecast 3–6 h ahead and compares it with the gauge afterwards.'
+        : `Learned from this browser: <b class="text-slate-200">×${L.factor.toFixed(2)}</b> from ${L.n} event${L.n === 1 ? '' : 's'} (median of measured ÷ forecast hardest 3 h)${L.n < LEARN_MIN_EVENTS ? ` · needs ${LEARN_MIN_EVENTS}+ to be trusted` : ''}. `
+          + (Math.abs(L.factor - s.bias) >= 0.05 ? `<button onclick="useLearnedBias()" class="underline text-sky-300 hover:text-sky-200">Use ×${L.factor.toFixed(2)}</button>` : '(matches the setting)');
+    document.getElementById('setGate').checked = s.gate;
+    const row = (label, name, color) => `<div class="flex justify-between gap-2"><span><span class="${color}">■</span> ${label} ≥ <b class="text-white">${cal.thresh[name].toFixed(2)} in / 3 h</b></span><span class="text-[0.7rem] text-slate-500 text-right">${cal.notes[name]}</span></div>`;
+    document.getElementById('thresholdTable').innerHTML = `<div class="text-[0.7rem] uppercase tracking-wider text-slate-500">${s.gate ? 'With flap gate' : 'Pre-gate'} thresholds</div>`
+        + RATED.map((n, k) => row(['Blue', 'Green', 'Yellow', 'Red', 'Purple'][k] + ' (' + LV_NAME[k + 1] + ')', n, LV_TEXTCLS[k + 1])).join('');
+}
+
+// =================================================================
+// CHART + PLUGINS
+// =================================================================
+let view = null, forecastChart;
+const ctx = document.getElementById('forecastChart').getContext('2d');
+const slotHalf = (x, n) => n < 2 ? (x.right - x.left) / 2 : Math.abs(x.getPixelForValue(1) - x.getPixelForValue(0)) / 2;
+
+const daylightPlugin = {
+    id: 'daylight',
+    beforeDatasetsDraw(chart) {
+        if (!view) return;
+        const { ctx, chartArea: { top, bottom, left, right }, scales: { x } } = chart;
+        const half = slotHalf(x, view.times.length), clip = (a, b) => [Math.max(left, a), Math.min(right, b)];
+        ctx.save();
+        view.times.forEach((t, i) => {
+            const cx = x.getPixelForValue(i), sx0 = cx - half, w = half * 2;
+            const s0 = t.getTime() - 1800000, s1 = s0 + 3600000, { rise, set } = sunTimes(t);
+            let [a, b] = clip(sx0, sx0 + w);
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.45)'; ctx.fillRect(a, top, b - a, bottom - top);
+            const d0 = Math.max(s0, rise), d1 = Math.min(s1, set);
+            if (d1 > d0) { [a, b] = clip(sx0 + w * (d0 - s0) / 3600000, sx0 + w * (d1 - s0) / 3600000); ctx.fillStyle = 'rgba(253, 224, 71, 0.12)'; ctx.fillRect(a, top, b - a, bottom - top); }
+        });
+        ctx.restore();
+    }
+};
+const nowLinePlugin = {
+    id: 'nowLine',
+    afterDraw(chart) {
+        if (!view?.isLive) return;
+        const { ctx, chartArea: { top, bottom, left, right }, scales: { x } } = chart;
+        const pos = (Date.now() - view.times[0].getTime()) / 3600000;
+        if (pos < 0 || pos > view.times.length - 1) return;
+        const i = Math.floor(pos), xPos = x.getPixelForValue(i) + (pos - i) * slotHalf(x, view.times.length) * 2;
+        if (xPos < left || xPos > right) return;
+        ctx.save();
+        ctx.beginPath(); ctx.setLineDash([6, 6]); ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 2; ctx.moveTo(xPos, top); ctx.lineTo(xPos, bottom); ctx.stroke();
+        ctx.setLineDash([]); ctx.fillStyle = '#0284c7'; ctx.fillRect(xPos - 22 * uiScale(), top, 44 * uiScale(), 16 * uiScale());
+        ctx.fillStyle = '#fff'; ctx.font = `bold ${Math.round(10 * uiScale())}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('NOW', xPos, top + 8 * uiScale());
+        ctx.restore();
+    }
+};
+const channelLinesPlugin = {   // county thresholds on the channel-level axis
+    id: 'channelLines',
+    afterDatasetsDraw(chart) {
+        const { ctx, chartArea: { left, right }, scales: { yStage } } = chart;
+        if (!yStage) return;
+        ctx.save(); ctx.setLineDash([3, 4]); ctx.lineWidth = 1; ctx.font = `${Math.round(10 * uiScale())}px sans-serif`; ctx.textAlign = 'right';
+        [['monitor', '#facc15', 'Monitoring'], ['watch', '#f97316', 'Watch'], ['warning', '#ef4444', 'Warning']].forEach(([k, c, n]) => {
+            const y = yStage.getPixelForValue(CH_THRESH[k]);
+            ctx.strokeStyle = c + '99'; ctx.beginPath(); ctx.moveTo(left, y); ctx.lineTo(right, y); ctx.stroke();
+            ctx.fillStyle = c; ctx.fillText(`channel ${n} ${CH_THRESH[k]} ft`, right - 4, y - 3);
+        });
+        ctx.restore();
+    }
+};
+// Where measured rain covers the forecast bar, outline the forecast amount in blue on top of the teal so it stays visible
+const fcTickPlugin = {
+    id: 'fcTick',
+    afterDatasetsDraw(chart) {
+        const ds = chart.data.datasets, iF = ds.findIndex(d => d.label === 'Rain forecast (in)'), iM = ds.findIndex(d => /^Rain measured|^Hourly rain/.test(d.label));
+        if (iF < 0 || iM < 0) return;
+        const mF = chart.getDatasetMeta(iF), y = chart.scales.yRain, { ctx } = chart;
+        ctx.save(); ctx.strokeStyle = FC_BAR; ctx.lineWidth = 2;
+        ds[iF].data.forEach((f, i) => {
+            const m = ds[iM].data[i];
+            if (f == null || f <= 0 || m == null || m < f) return;
+            const bar = mF.data[i]; if (!bar) return;
+            const w = bar.width - 2, yy = y.getPixelForValue(f), y0 = y.getPixelForValue(0);
+            ctx.strokeRect(bar.x - w / 2, yy, w, y0 - yy - 1);
+        });
+        ctx.restore();
+    }
+};
+const riskStripPlugin = {
+    id: 'riskStrip',
+    afterDatasetsDraw(chart) {
+        if (!view) return;
+        const { ctx, chartArea: { bottom }, scales: { x } } = chart;
+        const half = slotHalf(x, view.times.length), colors = LV_COLOR;
+        ctx.save();
+        // Drawn in the gap between the plot and the hour labels (x ticks are padded to make room), so it never covers the bars
+        const y0 = bottom + 3, h = 7;
+        ctx.fillStyle = 'rgba(51,65,85,0.5)'; ctx.fillRect(x.getPixelForValue(0) - half, y0, half * 2 * view.level.length, h);
+        view.level.forEach((lv, i) => { if (lv) { ctx.fillStyle = colors[lv]; ctx.fillRect(x.getPixelForValue(i) - half, y0, half * 2, h); } });
+        ctx.restore();
+    }
+};
+
+// Color-coded key under the chart: swatches match the chart's own colors
+const KEY = {
+    bar: c => `<span style="display:inline-block;width:10px;height:10px;background:${c};border-radius:2px;vertical-align:middle;margin-right:4px"></span>`,
+    line: (c, dash) => `<span style="display:inline-block;width:18px;height:0;border-top:2px ${dash ? 'dashed' : 'solid'} ${c};vertical-align:middle;margin-right:4px"></span>`,
+    band: c => `<span style="display:inline-block;width:14px;height:10px;background:${c};vertical-align:middle;margin-right:4px;border:1px solid #475569"></span>`,
+    item: (sw, text) => `<span style="display:inline-block;margin:2px 12px 2px 0;white-space:nowrap">${sw}${text}</span>`
+};
+function riskKey() {
+    return KEY.item('', 'Strip along the time axis = rating:') + [1, 2, 3, 4, 5].map(l => KEY.item(KEY.bar(LV_COLOR[l]), LV_NAME[l])).join('');
+}
+function setChartKey(itemsHtml, noteText = '') {
+    document.getElementById('chartNote').innerHTML = `<div>${itemsHtml}</div>${noteText ? `<div class="mt-1">${escapeHtml(noteText)}</div>` : ''}`;
+}
+function drawChart({ times, tide, rain, r3, stage, level, isLive, forecastFromIdx = Infinity, rainColors, withDate, ghost = null, ghostColors = null, stageDotIdx = null }) {
+    if (forecastChart) forecastChart.destroy();
+    view = { times, level, isLive };
+    const rMax = Math.max(1.0, ...rain.map(v => v || 0), ...(ghost || []).map(v => v || 0), ...r3) * 1.1;
+    const tv = tide.filter(v => v != null), sv = stage.filter(v => v != null);
+    Chart.defaults.font.size = Math.round(12 * uiScale());
+    forecastChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: times.map(t => hourLabel(t, withDate)),
+            datasets: [
+                { type: 'line', label: 'Bay tide (ft MLLW)', data: tide, borderColor: '#38bdf8', borderWidth: 2, pointRadius: 0, tension: 0.3, spanGaps: true,
+                  segment: { borderDash: c => c.p1DataIndex > forecastFromIdx ? [6, 4] : undefined }, yAxisID: 'yTide', order: 1 },
+                { type: 'line', label: 'Channel level @ Caltrain (ft)', data: stage, borderColor: '#c084fc', backgroundColor: 'rgba(192,132,252,0.12)', fill: true, borderWidth: 2,
+                  pointRadius: stageDotIdx != null ? stage.map((_, i) => i === stageDotIdx ? 4 : 0) : 0, pointBackgroundColor: '#c084fc', tension: 0.2, spanGaps: true, yAxisID: 'yStage', order: 0,
+                  segment: stageDotIdx != null ? { borderDash: c => c.p0DataIndex >= stageDotIdx ? [4, 4] : undefined } : undefined },   // dot = hour of the latest reading; dashed after it = no new report (level assumed unchanged)
+                { type: 'line', label: 'Rolling 3-h rain (in)', data: r3, borderColor: '#f59e0b', borderWidth: 2, pointRadius: 0, tension: 0.2, yAxisID: 'yRain', order: 2 },
+                { type: 'bar', label: ghost ? 'Rain measured (in)' : 'Hourly rain (in)', data: rain, backgroundColor: rainColors || 'rgba(45, 212, 191, 0.85)', borderWidth: 0, yAxisID: 'yRain', order: 3, grouped: false },
+                ...(ghost ? [{ type: 'bar', label: 'Rain forecast (in)', data: ghost, backgroundColor: ghostColors, borderWidth: 0, yAxisID: 'yRain', order: 4, grouped: false }] : [])
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false, animation: false,
+            interaction: { mode: 'index', intersect: false },
+            scales: {
+                x: { ticks: { color: '#94a3b8', maxTicksLimit: 12, autoSkip: true, maxRotation: 0, padding: 14 }, grid: { color: 'rgba(51,65,85,0.3)', drawTicks: false } },
+                yTide: { type: 'linear', position: 'left', min: -2, max: Math.max(12, Math.ceil(Math.max(0, ...tv) + 1)), title: { display: true, text: 'Tide (ft MLLW)', color: '#38bdf8' }, ticks: { color: '#38bdf8' }, grid: { color: 'rgba(51,65,85,0.5)' } },
+                yRain: { type: 'linear', position: 'right', min: 0, max: rMax, title: { display: true, text: 'Rain (in/hr · in per 3 h)', color: '#2dd4bf' }, ticks: { color: '#2dd4bf' }, grid: { drawOnChartArea: false } },
+                yStage: { type: 'linear', position: 'right', min: 0, max: Math.max(7, Math.ceil(Math.max(0, ...sv) + 0.5)), title: { display: true, text: 'Channel level (ft)', color: '#c084fc' }, ticks: { color: '#c084fc' }, grid: { drawOnChartArea: false } }
+            },
+            plugins: {
+                legend: { labels: { color: '#f8fafc' } },
+                tooltip: { callbacks: { afterBody: items => { const lv = level[items[0].dataIndex]; return lv ? `Rain risk: ${BADGES[lv][1]}` : ''; } } }
+            }
+        },
+        plugins: [daylightPlugin, riskStripPlugin, channelLinesPlugin, fcTickPlugin, nowLinePlugin]
+    });
+}
+
+// =================================================================
+// RISK CARD
+// =================================================================
+const BADGES = [
+    ['bg-slate-900 border-slate-600 text-slate-300', 'NONE (LOW)', 'No rain burst near the levels that have flooded the street.'],
+    ['bg-blue-950/80 border-blue-700 text-blue-200', 'BLUE: SIDEWALK', 'Water covering the sidewalk likely. Minor.'],
+    ['bg-green-950/80 border-green-700 text-green-200', 'GREEN: YARD', 'Water past the sidewalk into yards likely, short of the garage doors. Clear the street drain and ditches of debris.'],
+    ['bg-yellow-950/80 border-yellow-600 text-yellow-200', 'YELLOW: GARAGE', 'Water reaching the garage doors likely (Feb 2025 and Dec 2025 profiles). Move vehicles out of the cul-de-sac.'],
+    ['bg-red-950/80 border-red-700 text-red-200', 'RED: GARAGE +', 'Water above the garage-door base and around the houses likely (Mar 2023 profile). Sandbag garage doors and the rear of the house.'],
+    ['bg-purple-950/80 border-purple-600 text-purple-200 animate-pulse', 'PURPLE: STRUCTURE', 'Interior flooding possible (NYE 2022 profile: 6" in a garage). Seal the dryer vent and low wall openings; sandbag; move valuables up.']
+];
+// Browser-tab icon: house with water at its base; the water takes the current live rating color (sky blue when calm or in a replay)
+const FAVICON_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><defs><clipPath id="c"><rect width="64" height="64" rx="14"/></clipPath></defs><g clip-path="url(#c)"><rect width="64" height="64" fill="#0f172a"/><path d="M32 9 L54 28 H48 V46 H16 V28 H10 Z" fill="#e2e8f0"/><rect x="28" y="34" width="8" height="12" fill="#0f172a"/><path d="M-4 41 Q4 35 12 41 T28 41 T44 41 T60 41 T76 41 V64 H-4 Z" fill="__W__"/><path d="M-4 50 Q4 44 12 50 T28 50 T44 50 T60 50 T76 50" fill="none" stroke="#0f172a" stroke-width="2.5" opacity=".35"/></g></svg>';
+function setFavicon(level) {
+    const el = document.getElementById('favicon'); if (!el) return;
+    const water = level > 0 ? LV_COLOR[level] : '#38bdf8';
+    el.href = 'data:image/svg+xml,' + encodeURIComponent(FAVICON_SVG.replace('__W__', water));
+}
+function setBadge(level, extra = '') {
+    const [cls, lvl, desc] = BADGES[level];
+    document.getElementById('riskBadge').className = 'p-4 rounded-xl border text-center ' + cls;
+    document.getElementById('riskLevel').innerText = lvl;
+    document.getElementById('riskDesc').innerText = desc + extra;
+}
+function setStatus(text, tone) {
+    const tones = { live: 'text-emerald-400', bench: 'text-amber-300', error: 'text-red-400', info: 'text-slate-400' };
+    const el = document.getElementById('dataStatus');
+    el.className = 'text-xs mt-2 font-medium ' + (tones[tone] || tones.info);
+    el.innerText = text;
+}
+const stageText = v => v == null ? '--' : `${v.toFixed(2)} ft${stageLevelOf(v) ? ' (' + ['', 'Monitoring', 'Watch', 'WARNING'][stageLevelOf(v)] + ')' : ''}`;
+
+// =================================================================
+// REPLAY
+// =================================================================
+let currentMode = { type: 'live' };
+
+// Live data failed completely: show a neutral "no data" state (not a historical replay, which could be mistaken for a forecast).
+// Stays in live mode, so the 10-minute auto-refresh and the tab-return refresh keep retrying.
+function showNoData(note) {
+    currentMode = { type: 'live' };
+    view = null; liveCache = null;   // so nothing re-draws old live data as if it were current
+    if (forecastChart) { forecastChart.destroy(); forecastChart = null; }
+    setStatus(note + ' Retrying automatically every 10 minutes.', 'error');
+    document.getElementById('riskBadge').className = 'p-4 rounded-xl border text-center bg-slate-900 border-amber-600 text-amber-200';
+    document.getElementById('riskLevel').innerText = 'NO LIVE DATA';
+    document.getElementById('riskDesc').innerText = 'The rating cannot be calculated right now. Check the live gauge tiles above, the NWS alerts, and the street itself.';
+    document.getElementById('riskCaveat').innerText = '';
+    document.getElementById('riskTitle').innerText = 'Peak Risk Rating';
+    document.getElementById('chartTitle').innerText = 'Live data unavailable';
+    setChartKey('', 'No chart while live data is unavailable. Past storms can still be replayed from the storm library below.');
+    setFavicon(0);
+}
+let replayGhostSrc = '';
+// For a logged storm with no saved forecasts, fetch archived HRRR once (Open-Meteo historical forecast) and keep it with the storm
+async function fetchArchivedForecast(s) {
+    const events = getAutoEvents(), ev = events.find(e => e.id === s.id); if (!ev) return;
+    ev.fcTried = true; storageSet('athlone_events', events);
+    try {
+        const times = hoursFrom(s.start, s.rain.length), d0 = localIso(times[0]).slice(0, 10), d1 = localIso(new Date(times[times.length - 1].getTime() + 3600000)).slice(0, 10);
+        const d = await fetchJson(`https://historical-forecast-api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&start_date=${d0}&end_date=${d1}&hourly=precipitation&precipitation_unit=inch&timezone=${TZ}&models=ncep_hrrr_conus`, 30000, 1);
+        const by = {}; d.hourly.time.forEach((t, i) => { by[parseLocal(t).getTime() - 3600000] = d.hourly.precipitation[i]; });   // value at L = rain in the hour ending at L
+        const fc = times.map(t => by[t.getTime()] ?? null);
+        if (fc.some(v => v != null)) {
+            const evs = getAutoEvents(), e2 = evs.find(e => e.id === s.id); if (e2) { e2.fc = fc; storageSet('athlone_events', evs); }
+            if (currentMode.type === 'replay' && currentMode.id === s.id) loadReplay(s.id, currentMode.failNote);
+        }
+    } catch (e) { console.warn('archived forecast unavailable', e); }
+}
+function loadReplay(id, failNote = '', scroll = false) {
+    const s = allStorms().find(x => x.id === id);
+    if (!s) return;
+    currentMode = { type: 'replay', id, failNote };
+    const cal = calibrate(s.regime === 'post');
+    const times = hoursFrom(s.start, s.rain.length), r3 = rolling(s.rain, 3);
+    const bias = getSettings().bias, fcLog = storageGet(FC_LOG_KEY, {});
+    let ghost = null, ghostSrc = '';
+    if (Array.isArray(s.fc)) { ghost = s.fc.map(v => v == null ? null : +(v * bias).toFixed(3)); ghostSrc = 'archived HRRR (very short range: the hour or two before; forecasts made hours ahead were often lower)'; }
+    else { const g = times.map(t => fcLog[t.getTime()]?.fLast); if (g.some(v => v != null)) { ghost = g.map(v => v == null ? null : +(v * bias).toFixed(3)); ghostSrc = 'the forecast this browser saw just before each hour'; } }
+    if (!ghost && s.kind !== 'archive' && s.status !== 'in-progress' && !s.fcTried) fetchArchivedForecast(s);   // logged before forecasts were saved: get archived HRRR once
+    drawChart({ times, tide: s.tide || [], rain: s.rain, r3, stage: s.stage, level: r3.map((v, i) => Math.max(levelFor(v, cal.thresh), CH_TO_LV[stageLevelOf(s.stage?.[i])])), isLive: false, withDate: true,
+        rainColors: MEAS_BAR, ghost, ghostColors: FC_BAR });
+    replayGhostSrc = ghostSrc;
+    const rainLv = levelFor(s.m.r3, cal.thresh), chLv = CH_TO_LV[stageLevelOf(s.m.stage)], lv = Math.max(rainLv, chLv);
+    setFavicon(0);   // replays never color the tab icon
+    setBadge(lv, `${chLv > rainLv ? ` Raised from ${LV_NAME[rainLv]} by the channel peak (${fmt(s.m.stage)} ft, county ${['', 'Monitoring', 'Watch', 'Warning'][stageLevelOf(s.m.stage)]}).` : ''} Street did: ${s.impact === 'unknown' ? 'not labeled yet' : LV_NAME[LEVELS.indexOf(s.impact)] ?? s.impact}.`);
+    document.getElementById('riskTitle').innerText = `Model Rating for ${s.label} (${s.regime === 'post' ? 'with gate' : 'pre-gate'})`;
+    document.getElementById('chartTitle').innerText = `Replay — ${s.label}`;
+    document.getElementById('statR3').innerText = `${fmt(s.m.r3)} in${s.m.r3At ? ' from ' + niceTime(s.m.r3At) : ''}`;
+    document.getElementById('statR1').innerText = `${fmt(s.m.r1)} in`;
+    document.getElementById('statR24').innerText = `${fmt(s.m.r24)} in (storm total ${fmt(s.m.total)})`;
+    document.getElementById('statStage').innerText = s.m.stage != null ? `peak ${stageText(s.m.stage)} at ${niceTime(s.m.stageAt)}` : '--';
+    document.getElementById('statTide').innerText = s.m.tide != null ? `${s.m.tide.toFixed(1)} ft MLLW (${(s.m.tide - NAVD_OFFSET).toFixed(1)} NAVD88)` : '--';
+    document.getElementById('statSurge').innerText = 'n/a (measured tide)';
+    setChartKey([
+        replayGhostSrc ? KEY.item(KEY.bar(FC_BAR), `Rain forecast × ${getSettings().bias.toFixed(2)}: ${replayGhostSrc}`) : '',
+        KEY.item(KEY.bar(MEAS_BAR), `Hourly rain, measured (${s.rainSource || 'Caltrain gauge'})${replayGhostSrc ? ', drawn over the forecast; a blue outline shows the forecast where rain beat it' : ''}`),
+        KEY.item(KEY.line('#f59e0b'), 'Rolling 3-hour rain (what the rating uses)'),
+        KEY.item(KEY.line('#c084fc'), 'Channel level @ Caltrain, with county lines:'),
+        KEY.item(KEY.line('#facc15', true), 'Monitoring'), KEY.item(KEY.line('#f97316', true), 'Watch'), KEY.item(KEY.line('#ef4444', true), 'Warning'),
+        KEY.item(KEY.line('#38bdf8'), 'Bay tide, measured (NOAA Redwood City)'),
+        KEY.item(KEY.band('rgba(253,224,71,0.25)'), 'Daylight'), KEY.item(KEY.band('rgba(15,23,42,0.9)'), 'Night')
+    ].join('') + '<br>' + riskKey(), s.note || '');
+    document.getElementById('riskCaveat').innerText = s.rainSuspect ? 'The gauge rain record looks incomplete for this storm, so it is excluded from calibration.' : (s.status === 'in-progress' ? 'Storm still in progress; numbers will update.' : '');
+    if (failNote) {
+        setStatus(failNote + ` — showing ${s.label} replay (not a forecast)`, 'error');
+        document.getElementById('riskBadge').className = 'p-4 rounded-xl border bg-slate-900 border-slate-600 text-slate-300 text-center';
+        document.getElementById('riskLevel').innerText = 'UNKNOWN (NO LIVE DATA)';
+        document.getElementById('riskDesc').innerText = 'Chart shows a historical replay. Check the county gauges and NWS directly.';
+    } else setStatus(`REPLAY — ${s.label}. Click "Refresh Live Data" to return to the forecast.`, 'bench');
+    renderLibrary();
+    if (scroll) window.scrollTo({ top: document.getElementById('forecastChart').getBoundingClientRect().top + window.scrollY - 120, behavior: 'smooth' });
+}
+
+// =================================================================
+// STORM LIBRARY UI
+// =================================================================
+function setLabel(id, value) {
+    const labels = getLabels();
+    labels[id] = value;
+    storageSet('athlone_labels2', labels);
+    refreshAll();
+}
+// Export / import: labels + auto-logged storms, so they can be backed up, moved, or built into the shared file
+function exportLabels() {
+    const data = { kind: 'athlone-flood-labels', app: VERSION, exported: new Date().toISOString(), labels: getLabels(), events: getAutoEvents(), forecastLog: storageGet(FC_LOG_KEY, {}), learned: learnBias() };
+    const blob = new Blob([JSON.stringify(data, null, 1)], { type: 'application/json' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+    a.download = `athlone-flood-labels-${localIso(new Date()).slice(0, 10)}.json`;
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+    document.getElementById('ioStatus').innerText = `Exported ${Object.keys(data.labels).length} labels and ${data.events.length} logged storms.`;
+}
+function importLabels(input) {
+    const f = input.files?.[0]; if (!f) return;
+    const r = new FileReader();
+    r.onload = () => {
+        try {
+            const d = JSON.parse(r.result);
+            if (d.kind !== 'athlone-flood-labels') throw new Error('not an Athlone labels file');
+            const labels = getLabels(); let nl = 0;
+            Object.entries(d.labels || {}).forEach(([k, v]) => { if (['unknown', ...LEVELS].includes(v) && labels[k] !== v) { labels[k] = v; nl++; } });
+            storageSet('athlone_labels2', labels);
+            const events = getAutoEvents(), have = new Set(events.map(e => e.id)); let ne = 0;
+            (d.events || []).forEach(e => { if (e?.id && !have.has(e.id)) { events.push(e); ne++; } });
+            storageSet('athlone_events', events);
+            if (d.forecastLog) { const fl = storageGet(FC_LOG_KEY, {}); Object.entries(d.forecastLog).forEach(([k, v]) => { fl[k] = { ...v, ...fl[k] }; }); storageSet(FC_LOG_KEY, fl); }
+            document.getElementById('ioStatus').innerText = `Imported ${nl} label change${nl === 1 ? '' : 's'} and ${ne} storm${ne === 1 ? '' : 's'}.`;
+            refreshAll();
+        } catch (e) { document.getElementById('ioStatus').innerText = 'Import failed: ' + e.message; }
+        input.value = '';
+    };
+    r.readAsText(f);
+}
+function deleteStorm(id) {
+    storageSet('athlone_events', getAutoEvents().filter(e => e.id !== id));
+    if (currentMode.type === 'replay' && currentMode.id === id) currentMode = { type: 'live' };
+    refreshAll();
+}
+
+function renderLibrary() {
+    const s = getSettings(), lvBadge = LV_TEXTCLS, lvName = LV_NAME;
+    const rows = allStorms().map(st => {
+        const cal = calibrate(st.regime === 'post'), rlv = levelFor(st.m.r3, cal.thresh), mlv = Math.max(rlv, CH_TO_LV[stageLevelOf(st.m.stage)]);
+        const known = st.impact !== 'unknown' && st.impact !== undefined;
+        const mismatch = known && !st.rainSuspect && LEVELS.indexOf(st.impact) !== mlv;
+        const slv = stageLevelOf(st.m.stage);
+        const opts = ['unknown', ...LEVELS].map(v => `<option value="${v}" ${v === st.impact ? 'selected' : ''}>${LEVEL_TEXT[v]}</option>`).join('');
+        const tag = st.kind === 'auto' ? 'auto-logged' : st.kind === 'manual' ? 'added' : 'archive';
+        const active = currentMode.type === 'replay' && currentMode.id === st.id;
+        return `<tr class="border-b border-slate-700/50 ${active ? 'bg-sky-900/30' : ''}">
+            <td><button onclick="loadReplay('${st.id}', '', true)" class="text-sky-300 hover:text-sky-200 font-medium">▶ ${escapeHtml(st.label)}</button>
+                <div class="text-[0.7rem] text-slate-500">${tag} · ${st.regime === 'post' ? 'gate' : 'pre-gate'}${st.status === 'in-progress' ? ' · <span class="text-amber-300">in progress</span>' : ''}${st.rainSuspect ? ' · <span class="text-amber-300">rain data suspect</span>' : ''}${st.rainSource ? ' · <span class="text-sky-300">rain: ' + escapeHtml(st.rainSource) + '</span>' : ''}</div></td>
+            <td class="text-right">${fmt(st.m.r1)}</td>
+            <td class="text-right font-bold text-amber-300">${fmt(st.m.r3)}</td>
+            <td class="text-right">${fmt(st.m.r24)}</td>
+            <td class="text-right ${CH_TEXTCLS[slv]}">${fmt(st.m.stage)} ft</td>
+            <td class="${lvBadge[mlv]}" title="${mlv > rlv ? 'Rain alone: ' + lvName[rlv] + '; raised by the channel peak' : 'From rain'}">${lvName[mlv]}${mlv > rlv ? '<sup>ch</sup>' : ''}${mismatch ? ' <span class="text-amber-400" title="Model and your label disagree">⚠</span>' : ''}</td>
+            <td><select onchange="setLabel('${st.id}', this.value)" class="bg-slate-900 border border-slate-700 rounded p-1 text-slate-200 max-w-[13rem]">${opts}</select></td>
+            <td>${st.kind !== 'archive' ? `<button onclick="deleteStorm('${st.id}')" class="text-slate-500 hover:text-red-400" title="Remove">✕</button>` : ''}</td>
+        </tr>`;
+    });
+    document.getElementById('libRows').innerHTML = rows.join('');
+    const scan = storageGet('athlone_scan', null);
+    document.getElementById('libStatus').innerText = scan ? `Last checked for new storms: ${niceTime(new Date(scan.at))}` : '';
+}
+
+// =================================================================
+// AUTO-LOGGING: find storms in the gauge archive since the last check
+// =================================================================
+function detectStorms(multi, nowMs, dataAt = nowMs) {   // dataAt: when the gauge data was fetched (a saved copy can't prove the rain stopped)
+    const bins = multi[IEM_STATION] || {};
+    const hours = [...new Set(Object.values(multi).flatMap(o => Object.keys(o).map(Number)))].sort((a, b) => a - b);
+    const marks = hours.filter(h => Object.values(multi).some(o => (o[h]?.rain || 0) >= 0.02) || (bins[h]?.stage ?? 0) >= MIN_EVENT.stage);
+    const groups = [];
+    marks.forEach(h => { const g = groups[groups.length - 1]; if (g && h - g.last <= 6 * 3600000) g.last = h; else groups.push({ first: h, last: h }); });
+    return groups.map(g => {
+        const start = g.first - 6 * 3600000, end = Math.min(g.last + 7 * 3600000, floorHour(nowMs) + 3600000);
+        const n = Math.round((end - start) / 3600000), stage = [], hrs = [];
+        for (let i = 0; i < n; i++) { const h = start + i * 3600000; hrs.push(h); stage.push(bins[h]?.stage ?? null); }
+        const pick = chooseRain(multi, hrs), rain = pick.rain;
+        const total = rain.reduce((s, v) => s + v, 0), r3 = Math.max(0, ...rolling(rain, 3)), smax = Math.max(0, ...stage.filter(v => v != null));
+        return { start, n, rain, stage, total, r3, smax, rainSource: pick.source, done: dataAt - g.last > 6 * 3600000 };
+    }).filter(e => e.total >= MIN_EVENT.total || e.r3 >= MIN_EVENT.r3 || e.smax >= MIN_EVENT.stage);
+}
+
+async function scanForStorms(multi, fromMs, dataAt = Date.now()) {
+    const nowMs = Date.now();
+    const found = detectStorms(multi, nowMs, Math.min(nowMs, dataAt));
+    const libSpans = Object.values(LIB_DATA).map(d => [parseLocal(d.start).getTime(), parseLocal(d.start).getTime() + d.rain.length * 3600000]);
+    const events = getAutoEvents();
+    let added = 0;
+    for (const f of found) {
+        if (libSpans.some(([a, b]) => f.start < b && f.start + f.n * 3600000 > a)) continue;   // already in the archive set
+        const id = 'auto-' + localIso(new Date(f.start + 6 * 3600000));
+        const prev = events.find(e => e.id === id || (parseLocal(e.start).getTime() <= f.start + 6 * 3600000 && parseLocal(e.start).getTime() + e.rain.length * 3600000 >= f.start + 6 * 3600000));
+        if (prev && prev.status === 'complete' && prev.tide?.some(v => v != null)) continue;
+        const tb = await fetchTideRange(f.start, f.start + f.n * 3600000).catch(() => ({}));
+        const tide = Array.from({ length: f.n }, (_, i) => tb[hourKey(localIso(new Date(f.start + i * 3600000)))] ?? null);
+        const ev = { id: prev?.id || id, kind: 'auto', label: niceTime(new Date(f.start + 6 * 3600000)), start: localIso(new Date(f.start)), rain: f.rain, stage: f.stage, tide, rainSource: f.rainSource, status: f.done ? 'complete' : 'in-progress', detectedAt: new Date().toISOString() };
+        if (prev) Object.assign(prev, ev); else { events.push(ev); added++; }
+    }
+    const labels = getLabels(), foundSpans = found.map(f => [f.start, f.start + f.n * 3600000]);
+    const kept = events.filter(e => {
+        const a = parseLocal(e.start).getTime(), b = a + e.rain.length * 3600000;
+        if (e.kind !== 'auto' || labels[e.id] || a < fromMs) return true;   // added by hand, labeled, or outside what was just rescanned
+        return foundSpans.some(([x, y]) => a < y && b > x);
+    });
+    storageSet('athlone_events', kept);
+    storageSet('athlone_scan', { at: nowMs, coveredFrom: fromMs });
+    return added;
+}
+
+async function addPastDate(e) {
+    e.preventDefault();
+    const date = document.getElementById('addDate').value, msg = document.getElementById('addMsg'), btn = document.getElementById('addBtn');
+    if (!date || date > isoDate(new Date())) { msg.innerText = 'Pick a past date.'; return; }
+    const start = parseLocal(date + 'T00:00').getTime() - 12 * 3600000, end = start + 48 * 3600000;
+    btn.disabled = true; msg.innerText = 'Fetching gauge archive…';
+    try {
+        const [multi, tb] = await Promise.all([fetchIem(start, end), fetchTideRange(start, end)]);
+        const n = 48, stage = [], tide = [], hrs = [];
+        for (let i = 0; i < n; i++) { const h = start + i * 3600000; hrs.push(h); stage.push(multi[IEM_STATION][h]?.stage ?? null); tide.push(tb[hourKey(localIso(new Date(h)))] ?? null); }
+        if (!Object.values(multi).some(o => Object.keys(o).length)) throw new Error('no gauge data for that date');
+        const pick = chooseRain(multi, hrs), rain = pick.rain;
+        const events = getAutoEvents().filter(x => x.id !== 'manual-' + date);
+        events.push({ id: 'manual-' + date, kind: 'manual', label: parseLocal(date + 'T12:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }), start: localIso(new Date(start)), rain, stage, tide, rainSource: pick.source, status: 'complete' });
+        storageSet('athlone_events', events);
+        msg.innerText = `Added. Total ${rain.reduce((s, v) => s + v, 0).toFixed(2)} in${pick.source ? ' (Caltrain rain sensor read low; using ' + pick.source + ')' : ''}. Set what the street did in the table.`;
+        refreshAll();
+    } catch (err) { msg.innerText = 'Could not add: ' + err.message; }
+    finally { btn.disabled = false; }
+}
+
+// =================================================================
+// LIVE: county gauges, NWS alerts, forecast
+// =================================================================
+let liveCache = null, gaugeFeed = null;
+
+async function fetchGaugeFeed() {
+    const d = await fetchJson(OS_BASE + 'sites.json?t=' + Date.now());
+    const site = n => (d.sites || []).find(x => x.number === n), sensor = (st, name) => st?.sensors?.find(z => z.name === name) || null;
+    const cal = site(OS_SITES.caltrain), ala = site(OS_SITES.alameda), pa = site(OS_SITES.paloAlto);
+    const g = { generated: d.generated, rainCal: sensor(cal, 'Rain Increment'), stageCal: sensor(cal, 'Stage'), stageAla: sensor(ala, 'Stage'), rainPA: sensor(pa, 'Rain Increment'), urlCal: cal?.url, urlAla: ala?.url, urlPA: pa?.url };
+    (g.stageCal?.thresholds || []).forEach(t => { if (/monitor/i.test(t.name)) CH_THRESH.monitor = t.value; else if (/watch/i.test(t.name)) CH_THRESH.watch = t.value; else if (/warning/i.test(t.name)) CH_THRESH.warning = t.value; });
+    return g;
+}
+const minutesAgo = ts => ts ? Math.round((Date.now() - parseLocal(ts).getTime()) / 60000) : null;
+const agoText = m => m == null ? 'no data' : m < 90 ? `${m} min ago` : m < 2880 ? `${Math.round(m / 60)} h ago` : `${Math.round(m / 1440)} d ago`;
+
+function archIssues() {
+    const h = liveCache?.hist;
+    if (liveCache?.histPending) return ['gauge archive (still loading)'];
+    if (h?.error) return [`gauge archive (${h.error})`];
+    if (h?.stale) return [`gauge archive not responding, using saved copy from ${new Date(h.at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`];
+    return [];
+}
+function renderGauges(g, err) {
+    const tiles = document.getElementById('gaugeTiles');
+    if (!g) { tiles.innerHTML = `<div class="text-slate-500 md:col-span-4">County gauge feed unavailable${err ? ' (' + escapeHtml(err) + ')' : ''}.</div>`; document.getElementById('gaugeStamp').innerText = ''; return; }
+    document.getElementById('gaugeStamp').innerText = `Feed generated ${g.generated} · refreshes ~15 min`;
+    const lvlCls = ['border-slate-700', 'border-yellow-400', 'border-orange-500', 'border-red-500', 'border-purple-500'], lvlTxt = ['Normal', 'Flood Monitoring', 'Flood Watch', 'FLOOD WARNING', 'ROADWAY FLOODED'];
+    const cal = calibrate(getSettings().gate);
+    const RAIN_BORDER = ['border-slate-700', 'border-blue-500', 'border-green-500', 'border-yellow-400', 'border-red-500', 'border-purple-500'];
+    const RAIN_BG = ['bg-slate-900/60', 'bg-blue-950/50', 'bg-green-950/50', 'bg-yellow-950/40', 'bg-red-950/50', 'bg-purple-950/50'];
+    const CH_BG = ['bg-slate-900/60', 'bg-yellow-950/40', 'bg-orange-950/50', 'bg-red-950/60', 'bg-purple-950/60'];
+    const rainTile = (title, r, url) => {
+        if (!r) return `<div class="bg-slate-900/60 p-3 rounded-lg border border-slate-700"><div class="text-slate-400">${title}</div><div class="text-slate-500 mt-1">no sensor</div></div>`;
+        const lv = levelFor(r.rain3 || 0, cal.thresh);
+        return `<a href="${url}" target="_blank" rel="noopener" class="block ${RAIN_BG[lv]} p-3 rounded-lg border-2 ${RAIN_BORDER[lv]} hover:border-sky-600">
+            <div class="text-slate-400">${title}</div>
+            <div class="text-white text-lg font-bold mt-1">${fmt(r.rain3)} in <span class="text-xs text-slate-400 font-normal">past 3 h</span> <span class="text-xs font-semibold ${LV_TEXTCLS[lv]}" title="Past-3-hour rain compared with the current rating thresholds. Rain only: the channel and the time it takes to respond are not included here.">${lv ? 'at ' + LV_NAME[lv] + ' threshold' : ''}</span></div>
+            <div class="text-slate-400">15 min ${fmt(r.rain15m)} · 1 h ${fmt(r.rain1)} · 6 h ${fmt(r.rain6)} · 24 h ${fmt(r.rain24)}</div>
+            <div class="text-[0.7rem] text-slate-500 mt-1">last report ${agoText(minutesAgo(r.time))} (reports when it rains)</div></a>`;
+    };
+    // At-a-glance bar: grey below the first county level, then yellow / orange / red bands, white marker at the current level
+    const stageBar = st => {
+        const th = (st.thresholds || []).map(t => ({ v: t.value, c: t.color || (/warning/i.test(t.name) ? '#ef4444' : /watch/i.test(t.name) ? '#f97316' : /monitor/i.test(t.name) ? '#facc15' : '#a855f7') })).sort((a, b) => a.v - b.v);   // county's own colors when given
+        if (!th.length) return '';
+        const top = Math.max(th[th.length - 1].v * 1.2, (st.value || 0) * 1.05), pct = v => Math.max(0, Math.min(100, v / top * 100));
+        let x = 0, segs = '';
+        [{ v: 0, c: '#334155' }, ...th].forEach((t, i, a) => { const end = i + 1 < a.length ? a[i + 1].v : top; segs += `<div style="position:absolute;left:${pct(t.v)}%;width:${pct(end) - pct(t.v)}%;top:0;bottom:0;background:${t.c};opacity:${i ? 0.85 : 1}"></div>`; });
+        const m = pct(st.value || 0);
+        return `<div style="position:relative;height:8px;margin-top:6px"><div style="position:absolute;left:calc(${m}% - 6px);top:0;width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:8px solid #fff"></div></div>
+            <div style="position:relative;height:10px;border-radius:5px;overflow:hidden;margin:1px 0 6px">${segs}</div>`;
+    };
+    const stageTile = (title, st, url, tip = '') => {
+        if (!st) return `<div class="bg-slate-900/60 p-3 rounded-lg border border-slate-700"><div class="text-slate-400">${title}</div><div class="text-slate-500 mt-1">no sensor</div></div>`;
+        let lv = 0; (st.thresholds || []).forEach(t => { if (st.value >= t.value) lv = Math.max(lv, Math.min(4, t.level || (/warning/i.test(t.name) ? 3 : /watch/i.test(t.name) ? 2 : /monitor/i.test(t.name) ? 1 : 4))); });
+        return `<a href="${url}" target="_blank" rel="noopener" title="${tip}" class="block ${CH_BG[lv]} p-3 rounded-lg border-2 ${lvlCls[lv]} hover:border-sky-600">
+            <div class="text-slate-400 truncate">${title}</div>
+            <div class="text-white text-lg font-bold mt-1">${fmt(st.value)} ft <span class="text-xs font-normal ${CH_TEXTCLS[lv]}">${lvlTxt[lv]}</span></div>
+            ${stageBar(st)}
+            <div class="text-slate-400">${(st.thresholds || []).map(t => `${t.name.replace('Flood ', '')} ${t.value}`).join(' · ')}</div>
+            <div class="text-[0.7rem] ${minutesAgo(st.time) > 90 ? 'text-amber-300/80' : 'text-slate-500'} mt-1">last report ${agoText(minutesAgo(st.time))} · gauge height, not elevation${minutesAgo(st.time) > 90 ? '<br>This gauge only sends a new level when it changes (plus a check-in every ~12 h), so no report usually means no change. It did stop sending levels for weeks in Feb 2026, so if it is raining hard and this stays quiet, compare with the other channel gauge.' : ''}</div></a>`;
+    };
+    tiles.innerHTML = rainTile('Rain — Atherton Ch. @ Caltrain (1.7 km)', g.rainCal, g.urlCal)
+        + stageTile('Atherton Channel @ Caltrain', g.stageCal, g.urlCal, 'Gauge just upstream of the Caltrain tracks, 1.7 km from Athlone Terrace: the reach that drains the neighborhood')
+        + stageTile('Atherton Channel @ Alameda', g.stageAla, g.urlAla, 'Gauge upstream at Alameda de las Pulgas; its top level (Roadway Flooded) means water spilling onto the road')
+        + rainTile('Rain — Palo Alto (cross-check, 8 km)', g.rainPA, g.urlPA);
+}
+
+async function fetchNws() { return ((await fetchJson(`https://api.weather.gov/alerts/active?point=${LAT},${LON}`)).features || []).map(f => f.properties); }
+function renderNws(alerts) {
+    const el = document.getElementById('nwsBanner');
+    if (!alerts?.length) { el.className = 'hidden'; el.innerHTML = ''; return; }
+    const sev = a => /warning/i.test(a.event) ? 'bg-red-950/80 border-red-700 text-red-100' : /watch/i.test(a.event) ? 'bg-orange-950/80 border-orange-700 text-orange-100' : 'bg-amber-950/70 border-amber-700 text-amber-100';
+    el.className = 'space-y-2';
+    el.innerHTML = alerts.map(a => { const until = a.ends || a.expires; return `<details class="${sev(a)} border rounded-xl p-3 text-sm"><summary class="cursor-pointer font-semibold">⚠️ NWS: ${escapeHtml(a.event)}${until ? ' — until ' + escapeHtml(new Date(until).toLocaleString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit' })) : ''}</summary><div class="text-xs mt-2 whitespace-pre-line opacity-90">${escapeHtml(a.headline || '')}\n\n${escapeHtml((a.description || '').slice(0, 1200))}</div></details>`; }).join('');
+}
+
+async function fetchRainForecast() {
+    // Three requests in parallel (one try each, 45 s): HRRR+blend hourly, plain blend hourly, HRRR 15-min.
+    // Open-Meteo sometimes takes 30-40 s or drops requests; running them side by side keeps the worst case near 45 s.
+    const base = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&hourly=precipitation&precipitation_unit=inch&timezone=${TZ}&past_days=2&forecast_days=3`;
+    const [hr, plain, m15] = await Promise.allSettled([
+        fetchJson(base + '&models=best_match,gfs_hrrr', 45000, 1),
+        fetchJson(base, 45000, 1),
+        fetchJson(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&minutely_15=precipitation&precipitation_unit=inch&timezone=${TZ}&forecast_days=2&models=ncep_hrrr_conus`, 45000, 1)
+    ]);
+    let out;
+    if (hr.status === 'fulfilled') {
+        const d = hr.value, hrrr = d.hourly.precipitation_gfs_hrrr || [], best = d.hourly.precipitation_best_match || d.hourly.precipitation || [];
+        let nH = 0;
+        out = { times: d.hourly.time, precip: d.hourly.time.map((_, i) => hrrr[i] != null ? (nH++, hrrr[i]) : (best[i] ?? null)), source: nH ? 'HRRR 3 km, blended model beyond' : 'blended model (HRRR unavailable)' };
+    } else if (plain.status === 'fulfilled') {
+        out = { times: plain.value.hourly.time, precip: plain.value.hourly.precipitation, source: 'blended model (HRRR unavailable)' };
+    } else {
+        const c = storageGet('athlone_fc_cache', null);
+        if (c && Date.now() - c.at < 12 * 3600000) return { ...c.out, source: `saved forecast from ${new Date(c.at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })} (Open-Meteo not responding)`, stale: true };
+        throw hr.reason || plain.reason;
+    }
+    // HRRR 15-minute output: finer timing for the next ~18+ h (matched Windy better than the hourly series on Nov 13).
+    // Each value is rain in the 15 min ENDING at its time; summed into the same hour labels.
+    if (m15.status === 'fulfilled') {
+        const mt = m15.value.minutely_15?.time || [], mp = m15.value.minutely_15?.precipitation || [], sums = {};
+        mt.forEach((t, i) => { if (mp[i] != null) sums[parseLocal(t).getTime()] = mp[i]; });
+        let used = 0;
+        out.times.forEach((t, i) => {
+            const L = parseLocal(t).getTime(), parts = [L - 45 * 60000, L - 30 * 60000, L - 15 * 60000, L].map(k => sums[k]);
+            if (parts.every(v => v != null)) { out.precip[i] = +parts.reduce((a, b) => a + b, 0).toFixed(3); used++; }
+        });
+        if (used) out.source = 'HRRR 15-min for the next ' + used + ' h, then ' + out.source;
+    }
+    storageSet('athlone_fc_cache', { at: Date.now(), out });
+    return out;
+}
+
+// Gauge archive: one request per page load at most every 20 min (the archive rate-limits). Covers the chart's past
+// 48 h and everything since the last storm scan (up to 14 days back).
+async function getGaugeHistory(force) {
+    // The gauge archive (Iowa Mesonet) rate-limits by address: fetch at most every 20 min (2 min when Refresh is pressed),
+    // retry once after a pause, and fall back to the last saved copy (up to 24 h old) if it still fails.
+    const cache = storageGet('athlone_iem_cache2', null), nowMs = Date.now();
+    if (cache && nowMs - cache.at < (force ? 2 : 20) * 60000) { removeRainSpikes(cache.multi); return cache; }
+    const scan = storageGet('athlone_scan', null);
+    const from = Math.max(nowMs - 14 * 864e5, Math.min(nowMs - 3 * 864e5, (scan?.at ?? 0) - 24 * 3600000));
+    let multi, lastErr;
+    for (let k = 0; k < 2 && !multi; k++) {
+        try { multi = await fetchIem(from, nowMs + 3600000); }
+        catch (e) { lastErr = e; console.warn('gauge archive attempt failed', e); if (k === 0) await new Promise(r => setTimeout(r, 5000)); }
+    }
+    if (!multi) {
+        if (cache && nowMs - cache.at < 24 * 3600000) { removeRainSpikes(cache.multi); return { ...cache, stale: true }; }
+        throw lastErr;
+    }
+    const out = { at: nowMs, from, multi };
+    storageSet('athlone_iem_cache2', out);
+    return out;
+}
+
+let loadSeq = 0;
+async function loadLiveData(force = false) {
+    currentMode = { type: 'live' };
+    // Each load gets a number; results from an older, slower load are ignored, so Refresh always works (no disabled button)
+    const my = ++loadSeq;
+    const btn = document.getElementById('btnFetchLive');
+    btn.innerText = '⏳ Refreshing…';
+    setStatus('Loading live data…', 'info');
+    fetchGaugeFeed().then(g => { gaugeFeed = g; renderGauges(g); if (liveCache) renderLive(); }).catch(e => { console.warn('County gauge feed unavailable', e); renderGauges(null, e.message); });
+    fetchNws().then(renderNws).catch(e => { console.warn('NWS alerts unavailable', e); renderNws(null); });
+    // Gauge archive → past rain/stage + automatic storm log (independent of the forecast)
+    const histP = getGaugeHistory(force).then(async h => {
+        const added = await scanForStorms(h.multi, h.from, h.at);
+        if (added) document.getElementById('libStatus').innerText = `${added} new storm${added > 1 ? 's' : ''} logged. Label ${added > 1 ? 'them' : 'it'} below.`;
+        return h;
+    }).catch(e => { console.warn('Gauge archive unavailable', e); return { error: e.message }; });
+    const issues = [];
+    const soft = (name, p, fallback) => p.catch(e => { console.warn(name + ' unavailable', e); issues.push(`${name} (${errText(e)})`); return fallback; });
+    try {
+        const today = new Date(); today.setHours(0, 0, 0, 0);
+        const start = new Date(today.getTime() - 2 * 864e5), end = new Date(today.getTime() + 3 * 864e5);
+        const noaa = `https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?station=${STATION}&datum=MLLW&time_zone=lst_ldt&units=english&application=athlone_dashboard&format=json`;
+        const [pred, obs, ofs, rainData, hist] = await Promise.all([
+            soft('tide predictions', fetchJson(`${noaa}&product=predictions&interval=h&begin_date=${ymd(start)}&range=120`), { predictions: [] }),
+            soft('measured tide', fetchJson(`${noaa}&product=water_level&begin_date=${ymd(start)}&range=72`), { data: [] }),
+            soft('Bay surge forecast', fetchJson(`${noaa}&product=ofs_water_level&begin_date=${ymd(today)}&end_date=${ymd(end)}`), { data: [] }),
+            fetchRainForecast().catch(e => {
+                console.warn('rain forecast unavailable', e);
+                issues.push(`rain forecast (${errText(e)})`);
+                const t0 = floorHour(Date.now()) - 48 * 3600000;   // empty forecast: measured rain, channel and tide still show
+                const times = Array.from({ length: 97 }, (_, i) => localIso(new Date(t0 + (i + 1) * 3600000)));
+                return { times, precip: times.map(() => null), source: 'NONE: forecast unavailable, measured rain only', noForecast: true };
+            }),
+            Promise.race([histP, new Promise(r => setTimeout(() => r({ pending: true }), 8000))])
+        ]);
+        if (my !== loadSeq) return;
+        liveCache = { pred: pred.predictions ? pred : { predictions: [] }, obs, ofs, rainData, hist: hist?.pending ? null : hist, histPending: !!hist?.pending, fetchedAt: new Date(), issues };
+        refreshAll();
+        if (hist?.pending) {   // the archive is slow: show everything else now, add measured rain when it arrives
+            const mine = liveCache;
+            histP.then(h => { if (liveCache === mine) { mine.hist = h; mine.histPending = false; refreshAll(); } });
+        }
+    } catch (err) {
+        console.warn('Live fetch failed, loading fallback replay...', err);
+        const what = `${err.source || 'live data'}: ${errText(err)}`;
+        const hint = /failed to fetch|load failed|networkerror|timed out/i.test(errText(err))
+            ? ' The browser could not reach the data servers. If this file was opened from an email or file preview, or in Safari, save it and open it in Chrome, Edge or Firefox.' : '';
+        if (my !== loadSeq) return;
+        showNoData('⚠ LIVE DATA FAILED — ' + what + '.' + hint);
+    } finally { if (my === loadSeq) btn.innerText = '🔄 Refresh Live Data'; }
+}
+
+function renderLive() {
+    if (currentMode.type !== 'live' || !liveCache) return;
+    const { pred, obs, ofs, rainData, hist, fetchedAt } = liveCache;
+    const predBy = {}, obsBy = {}, ofsBy = {};
+    pred.predictions.forEach(p => { predBy[hourKey(p.t)] = parseFloat(p.v); });
+    (obs.data || []).forEach(p => { if (p.t.endsWith(':00') && p.v !== '') obsBy[hourKey(p.t)] = parseFloat(p.v); });
+    (ofs?.data || []).forEach(p => { if (p.t.endsWith(':00') && p.v !== '') ofsBy[hourKey(p.t)] = parseFloat(p.v); });
+
+    // Chart bins: hour STARTING at each label (same convention as the gauge and replays).
+    // Open-Meteo labels a value by the hour it ENDS, so forecast rain for bin t comes from label t+1h.
+    const omBy = {}; rainData.times.forEach((t, i) => { omBy[parseLocal(t).getTime() - 3600000] = rainData.precip[i]; });
+    const nowMs = Date.now(), nowBin = floorHour(nowMs);
+    const t0 = nowBin - 24 * 3600000, omEnd = Math.max(...Object.keys(omBy).map(Number));
+    const N = Math.max(25, Math.min(96, Math.floor((omEnd - t0) / 3600000) + 1));
+    const times = Array.from({ length: N }, (_, i) => new Date(t0 + i * 3600000));
+    const keys = times.map(t => hourKey(localIso(t)));
+    const s = getSettings(), cal = calibrate(s.gate);
+    const multi = hist?.multi || null, bins = multi?.[IEM_STATION] || null;
+    const haveGauge = !!multi && Object.values(multi).some(o => Object.keys(o).length > 0);
+    const pastHrs = Array.from({ length: 24 }, (_, i) => t0 + i * 3600000);
+    const livePick = haveGauge ? chooseRain(multi, pastHrs) : null;
+    const pastRainBy = {}; if (livePick) pastHrs.forEach((h, i) => { pastRainBy[h] = livePick.rain[i]; });
+
+    let lastObsIdx = -1; keys.forEach((k, i) => { if (obsBy[k] != null && predBy[k] != null) lastObsIdx = i; });
+    const surgeNow = lastObsIdx >= 0 ? obsBy[keys[lastObsIdx]] - predBy[keys[lastObsIdx]] : 0;
+    let maxFcSurge = null; const ofsCount = keys.filter((k, i) => i > lastObsIdx && ofsBy[k] != null).length;
+    const tide = keys.map((k, i) => {
+        if (i <= lastObsIdx && obsBy[k] != null) return obsBy[k];
+        if (ofsBy[k] != null) { if (predBy[k] != null) maxFcSurge = Math.max(maxFcSurge ?? -9, ofsBy[k] - predBy[k]); return ofsBy[k]; }
+        if (predBy[k] == null) return null;
+        return +(predBy[k] + surgeNow * (lastObsIdx >= 0 ? Math.max(0, 1 - (i - lastObsIdx) / 24) : 0)).toFixed(2);
+    });
+
+    // Measured rain. The county feed's hourly totals (hour-start bins, same as ours; refreshed every ~10-15 min) are fresher than
+    // the archive (~45 min behind), so they're used for recent hours when the Caltrain gauge is the source. The current hour is
+    // a partial "so far" bar that becomes a normal measured bar once the hour ends.
+    const feedOk = !livePick?.source && gaugeFeed?.rainCal && gaugeFeed.generated && (Date.now() - parseLocal(gaugeFeed.generated.replace(' ', 'T')).getTime()) < 90 * 60000;
+    const feedBy = {}; if (feedOk) (gaugeFeed.rainCal.hourly || []).forEach(([t, v]) => { feedBy[parseLocal(t.replace(' ', 'T')).getTime()] = v; });
+    const feedFrom = Math.min(...Object.keys(feedBy).map(Number), Infinity);
+    const measured = times.map(t => t.getTime() < nowBin && (haveGauge || (feedOk && t.getTime() >= feedFrom)));
+    const partialNow = feedOk;   // we know the rain so far this hour
+    const soFar = partialNow ? (feedBy[nowBin] ?? 0) : null, elapsed = Math.min(1, Math.max(0, (Date.now() - nowBin) / 3600000));
+    const rain = times.map((t, i) => {
+        const ms = t.getTime();
+        if (measured[i]) return +(feedBy[ms] ?? (ms >= feedFrom && feedOk ? 0 : pastRainBy[ms] ?? 0)).toFixed(2);
+        if (ms === nowBin && partialNow) return +soFar.toFixed(2);   // so far this hour (bar)
+        return +((omBy[ms] ?? 0) * s.bias).toFixed(3);
+    });
+    // For the rating, the current hour = rain so far + the forecast for the part of the hour still to come
+    const rainForRating = rain.map((v, i) => times[i].getTime() === nowBin && partialNow ? +(soFar + (omBy[nowBin] ?? 0) * s.bias * (1 - elapsed)).toFixed(3) : v);
+    try { if (!rainData.stale && !rainData.noForecast) logForecastSlots(omBy, nowBin); logMeasuredSlots(multi, nowBin); } catch (e) { console.warn('bias learner', e); }
+    // Channel level. The gauge only reports when the level moves ~0.1 ft (plus check-ins at 5:13 and 17:13), and the archive
+    // mostly gets just the check-ins, so the county feed's individual readings are used: hourly max of readings, and between
+    // readings the level is carried forward (no report = no change). Archive fills older hours the feed doesn't cover.
+    const pts = (gaugeFeed?.stageCal?.points || []).map(([t, v]) => [parseLocal(t.replace(' ', 'T')).getTime(), v]).filter(([t, v]) => !isNaN(t) && v != null).sort((a, b) => a[0] - b[0]);
+    const stage = times.map(t => {
+        const a = t.getTime(), b = a + 3600000;
+        if (a > nowBin) return null;
+        if (pts.length && a + 3600000 > pts[0][0]) {
+            const inHour = pts.filter(([pt]) => pt >= a && pt < b).map(([, v]) => v);
+            const before = pts.filter(([pt]) => pt < a).pop();
+            const vals = before ? [before[1], ...inHour] : inHour;
+            if (vals.length) return Math.max(...vals);
+        }
+        return bins?.[a]?.stage ?? null;
+    });
+    const lastPt = pts.length ? pts[pts.length - 1][0] : null;
+    const stageDotIdx = lastPt != null ? times.findIndex(t => lastPt >= t.getTime() && lastPt < t.getTime() + 3600000) : null;
+    const r3 = rolling(rainForRating, 3), level = r3.map(v => levelFor(v, cal.thresh));
+
+    // Forecast drawn as an outlined bar; measured rain fills it from the bottom (and can overflow it). Past hours keep the
+    // forecast that was made just before they started (saved in the forecast log), so you can see how the forecast did.
+    const fcLog = storageGet(FC_LOG_KEY, {});
+    const ghost = times.map((t, i) => {
+        const ms = t.getTime();
+        if (ms >= nowBin) return omBy[ms] != null ? +(omBy[ms] * s.bias).toFixed(3) : null;
+        return fcLog[ms]?.fLast != null ? +(fcLog[ms].fLast * s.bias).toFixed(3) : null;
+    });
+    const isNow = i => times[i].getTime() === nowBin;
+    const barsMeasured = rain.map((v, i) => measured[i] || (isNow(i) && partialNow) ? v : null);
+    drawChart({ times, tide, rain: barsMeasured, r3, stage, level, isLive: true, forecastFromIdx: lastObsIdx, stageDotIdx: stageDotIdx >= 0 ? stageDotIdx : null,
+        rainColors: MEAS_BAR,
+        ghost, ghostColors: FC_BAR });
+
+    // Rating: hardest 3 h from now on (rolling windows ending ≥ now), plus the live channel level
+    const fromIdx = 24;
+    const fr3 = r3.slice(fromIdx), pk = argmax(fr3), peakR3 = fr3[pk] ?? 0;
+    const rainLv = levelFor(peakR3, cal.thresh);
+    const chNow = gaugeFeed?.stageCal && minutesAgo(gaugeFeed.stageCal.time) < 6 * 60 ? gaugeFeed.stageCal.value : null;
+    // Measured burst: a 1-hour total this high has gone with garage-level water (Feb 2025 0.43, Mar 2023 0.52, Dec 2025 0.59 in/h),
+    // so raise the rating right away instead of waiting for the forecast to catch up (HRRR has missed these bursts by ~3x).
+    const feed1h = gaugeFeed?.rainCal && minutesAgo(gaugeFeed.rainCal.time) < 90 ? (gaugeFeed.rainCal.rain1 ?? 0) : 0;
+    const lastHr = measured[fromIdx - 1] ? (rain[fromIdx - 1] || 0) : 0, hr1 = Math.max(feed1h, lastHr);
+    const burstLv = hr1 >= BURST_1H ? LEVELS.indexOf('garage') : 0;
+    const chLv = CH_TO_LV[stageLevelOf(chNow)], lv = Math.max(rainLv, chLv, burstLv);
+    // "If HRRR is low" scenario: forecast hours at 3x (the typical miss in the big-burst storms) instead of the bias factor
+    const rainAlt = times.map((t, i) => measured[i] ? rain[i] : t.getTime() === nowBin && partialNow ? soFar + (omBy[nowBin] ?? 0) * BIG_MISS * (1 - elapsed) : (omBy[t.getTime()] ?? 0) * BIG_MISS);
+    const altPeak = Math.max(0, ...rolling(rainAlt, 3).slice(fromIdx)), altLv = levelFor(altPeak, cal.thresh);
+    let extra = rainLv && pk >= 0 ? ` Hardest rain around ${hourLabel(new Date(times[fromIdx + pk].getTime() - 2 * 3600000))}–${hourLabel(new Date(times[fromIdx + pk].getTime() + 3600000)).slice(-5)}.` : '';
+    if (chLv > rainLv) extra = ` Atherton Channel at Caltrain is at county ${['', 'Flood Monitoring', 'Flood Watch', 'FLOOD WARNING'][stageLevelOf(chNow)]} level (${chNow} ft) right now.`;
+    if (burstLv > Math.max(rainLv, chLv)) extra = ` ${fmt(hr1)} in of rain measured in the last hour at Caltrain: a burst like the ones that brought water to the garage doors.`;
+    if (altLv > lv && !rainData.noForecast) extra += ` If HRRR is low, as it was by about 3× in Mar 2023 and Dec 2025, the hardest 3 h would be ${fmt(altPeak)} in → ${LV_NAME[altLv].toUpperCase()}.`;
+    setBadge(lv, extra);
+    setFavicon(lv);
+    if (rainData.noForecast) {   // never show a calm "NONE" when we simply can't see what's coming
+        document.getElementById('riskLevel').innerText = (lv ? BADGES[lv][1] : 'NO FORECAST') + ' (measured only)';
+        document.getElementById('riskDesc').innerText = (haveGauge || chNow != null ? 'Based only on rain already measured' + (chNow != null ? ' and the channel level' : '') + '. ' : 'No measured rain or channel data either. ')
+            + 'The rain forecast is unavailable, so incoming rain is not included. Check the live gauges and NWS directly.';
+        if (!lv) document.getElementById('riskBadge').className = 'p-4 rounded-xl border text-center bg-slate-900 border-amber-600 text-amber-200';
+    }
+
+    const past24 = rain.slice(0, 24).reduce((a, b) => a + (b || 0), 0);
+    const fut = rain.slice(fromIdx), maxT = Math.max(...tide.slice(fromIdx).filter(v => v != null));
+    document.getElementById('riskTitle').innerText = 'Peak Risk Rating (now → +72 h)';
+    document.getElementById('chartTitle').innerText = 'Past 24 h + 72-Hour Forecast';
+    document.getElementById('statR3').innerText = `${fmt(peakR3)} in forecast · ${fmt(Math.max(0, ...r3.slice(0, fromIdx)))} in past 24 h`;
+    document.getElementById('statR1').innerText = `${fmt(Math.max(0, ...fut))} in forecast`;
+    document.getElementById('statR24').innerText = `${fmt(past24)} in measured · ${fmt(fut.slice(0, 24).reduce((a, b) => a + b, 0))} in next 24 h`;
+    document.getElementById('statStage').innerText = chNow != null ? stageText(chNow) + ' now' : (gaugeFeed ? 'no recent report' : '--');
+    document.getElementById('statTide').innerText = isFinite(maxT) ? `${maxT.toFixed(1)} ft MLLW (${(maxT - NAVD_OFFSET).toFixed(1)} NAVD88)` : '--';
+    document.getElementById('statSurge').innerText = (lastObsIdx >= 0 ? `now ${surgeNow >= 0 ? '+' : ''}${surgeNow.toFixed(2)} ft` : 'no obs') + (maxFcSurge != null ? ` · fcst max +${maxFcSurge.toFixed(1)}` : '');
+    setChartKey([
+        KEY.item(KEY.bar(FC_BAR), `Rain forecast (HRRR × ${s.bias.toFixed(2)}; for past hours, the forecast made just before)`),
+        haveGauge || partialNow ? KEY.item(KEY.bar(MEAS_BAR), `Rain measured, drawn over the forecast; a blue outline shows the forecast where rain beat it (${livePick?.source || 'Caltrain gauge'}; current hour updates every few minutes)`) : '',
+        KEY.item(KEY.line('#f59e0b'), 'Rolling 3-hour rain (what the rating uses)'),
+        KEY.item(KEY.line('#c084fc'), 'Channel level @ Caltrain (dot = latest reading; dashed after it = no new report, level assumed unchanged), with county lines:'),
+        KEY.item(KEY.line('#facc15', true), 'Monitoring'), KEY.item(KEY.line('#f97316', true), 'Watch'), KEY.item(KEY.line('#ef4444', true), 'Warning'),
+        KEY.item(KEY.line('#38bdf8'), 'Bay tide, measured'), KEY.item(KEY.line('#38bdf8', true), ofsCount ? 'Bay tide forecast (NOAA SF Bay model, includes surge)' : 'Bay tide forecast (prediction + current surge)'),
+        KEY.item('<span style="display:inline-block;background:#0284c7;color:#fff;font-weight:bold;font-size:0.7rem;padding:0 4px;border-radius:2px;vertical-align:middle;margin-right:4px">NOW</span>', 'current time (dashed vertical line)'), KEY.item(KEY.band('rgba(253,224,71,0.25)'), 'Daylight'), KEY.item(KEY.band('rgba(15,23,42,0.9)'), 'Night')
+    ].join('') + '<br>' + riskKey(), `For scale: the Bay tops out near 9.5 ft NAVD88; Athlone Terrace is ~${STREET_NAVD} ft.`);
+
+    const caveats = [];
+    if (rainData.noForecast) caveats.push('The rain forecast (Open-Meteo) is not responding, so this rating uses only rain already measured and the channel level. It cannot see rain that is still coming. Try Refresh in a few minutes.');
+    else if (rainData.stale) caveats.push('Open-Meteo is not responding; the rain forecast shown is the last one saved (' + rainData.source.replace(/^saved forecast from /, '').replace(/ \(.*$/, '') + ').');
+    if (s.gate && cal.unobserved.length) caveats.push(`No ${cal.unobserved.map(n => LV_NAME[LEVELS.indexOf(n)]).join(' or ')} flood has been documented since the flap gate went in, so those thresholds are lower bounds.`);
+    if (peakR3 >= cal.thresh.garage * 0.6) caveats.push('Forecast rain bursts here have been off by 2–3× on individual storms. Watch the measured rain and channel tiles as the storm arrives.');
+    if (hist?.error) caveats.push('Gauge archive unavailable (' + hist.error + '); past rain bars show the forecast model instead.');
+    if (livePick?.source) caveats.push(`The Caltrain rain sensor is reading far below nearby gauges (${livePick.primary.toFixed(2)} vs ${livePick.backup.toFixed(2)} in over 24 h), so past rain uses the ${livePick.source}. The sensor may be clogged.`);
+    document.getElementById('riskCaveat').innerText = caveats.join(' ');
+    setStatus('LIVE — updated ' + fetchedAt.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) + ' · Rain forecast: ' + rainData.source + (haveGauge ? ' · past rain measured' : '') + (archIssues().concat(liveCache.issues || []).length ? ' · unavailable: ' + archIssues().concat(liveCache.issues || []).join(', ') : ''), archIssues().concat(liveCache.issues || []).length ? 'bench' : 'live');
+}
+
+// =================================================================
+// REFRESH
+// =================================================================
+function refreshAll() {
+    const s = getSettings(), cal = calibrate(s.gate);
+    renderSettings(cal, s);
+    if (currentMode.type === 'replay') loadReplay(currentMode.id, currentMode.failNote);
+    else { renderLive(); renderLibrary(); }
+}
+
+setInterval(() => { if (forecastChart && view?.isLive) forecastChart.draw(); }, 60000);
+setInterval(() => { if (currentMode.type === 'live' && !document.hidden) loadLiveData(); }, 10 * 60000);   // auto-refresh every 10 min while the page is visible
+// While it's raining at Caltrain, re-check just the county feed every 5 minutes (it's small; the feed itself updates every ~10-15 min)
+setInterval(() => {
+    if (currentMode.type !== 'live' || document.hidden || !liveCache) return;
+    const r = gaugeFeed?.rainCal; if (!r || !((r.rain1 || 0) > 0 || (r.rain15m || 0) > 0)) return;
+    fetchGaugeFeed().then(g => { gaugeFeed = g; renderGauges(g); renderLive(); }).catch(e => console.warn('feed poll failed', e));
+}, 5 * 60000);
+// Coming back to the tab (or waking the computer): refresh right away if the live data is more than 10 minutes old
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden || currentMode.type !== 'live') return;
+    const age = liveCache?.fetchedAt ? Date.now() - liveCache.fetchedAt.getTime() : Infinity;
+    if (age > 10 * 60000) loadLiveData();
+});
+
+window.onload = () => {
+    refreshAll();
+    loadLiveData();
+};
+
+
+// =================================================================
+// DRAINAGE MAP (embedded reference page, isolated in an iframe)
+// =================================================================
+const MAP_HTML = "<!DOCTYPE html>\n<html lang=\"en\" data-theme=\"dark\">\n<head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n<title>Athlone Terrace Drainage Map<\/title>\n<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">\n<link href=\"https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap\" rel=\"stylesheet\">\n<style>\n/* Survey-sheet treatment: paper ground, water in blue, county drains in orange, your street in red. Two figures, then the evidence. */\n:root {\n  --paper: #f6f4ee; --ink: #1d2a33; --muted: #5d6b73; --rule: #d8d3c6;\n  --water: #1f6fb2; --drain: #d9731a; --alert: #c23b2e; --catch: #3d8a6a;\n  --street: #b9b2a3; --card: #fffdf8;\n  --display: \"Barlow Condensed\", \"Arial Narrow\", sans-serif;\n  --body: \"IBM Plex Sans\", system-ui, sans-serif;\n  color-scheme: light;\n}\n@media (prefers-color-scheme: dark) {\n  :root:not([data-theme=\"light\"]) {\n    --paper: #151b20; --ink: #e8e4da; --muted: #9aa6ad; --rule: #2e3a42;\n    --water: #5aa9e6; --drain: #f0a050; --alert: #ff7a6b; --catch: #6cc59c;\n    --street: #4a565e; --card: #1b232a; color-scheme: dark;\n  }\n}\n:root[data-theme=\"dark\"] {\n  --paper: #151b20; --ink: #e8e4da; --muted: #9aa6ad; --rule: #2e3a42;\n  --water: #5aa9e6; --drain: #f0a050; --alert: #ff7a6b; --catch: #6cc59c;\n  --street: #4a565e; --card: #1b232a; color-scheme: dark;\n}\n* { box-sizing: border-box; }\nbody { margin: 0; background: var(--paper); color: var(--ink); font: 15px/1.55 var(--body); }\nmain { max-width: 960px; margin: 0 auto; padding: 28px 16px 64px; display: grid; gap: 28px; }\nh1, h2 { font-family: var(--display); font-weight: 600; letter-spacing: .01em; text-wrap: balance; margin: 0; }\nh1 { font-size: 40px; line-height: 1.05; }\nh2 { font-size: 24px; border-bottom: 1px solid var(--rule); padding-bottom: 6px; }\np { margin: 0; max-width: 68ch; }\n.lede { font-size: 17px; color: var(--ink); }\n.meta { color: var(--muted); font-size: 13px; }\nfigure { margin: 0; display: grid; gap: 10px; }\nfigure .frame { overflow-x: auto; border: 1px solid var(--rule); border-radius: 6px; background: var(--card); }\nfigure svg { display: block; width: 100%; height: auto; min-width: 640px; }\nfigcaption { color: var(--muted); font-size: 13px; max-width: 75ch; }\n.legend { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 13px; color: var(--muted); }\n.legend span { display: inline-flex; align-items: center; gap: 7px; }\n.sw { width: 26px; height: 0; border-top: 4px solid; display: inline-block; }\n.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 16px; }\n.card { background: var(--card); border: 1px solid var(--rule); border-radius: 6px; padding: 16px; display: grid; gap: 8px; align-content: start; }\n.card h3 { margin: 0; font: 600 15px var(--body); }\nul, ol { margin: 0; padding-left: 20px; display: grid; gap: 6px; }\n.tag { display: inline-block; font: 600 11px var(--body); letter-spacing: .04em; text-transform: uppercase; padding: 2px 7px; border-radius: 3px; border: 1px solid; }\n.known { color: var(--catch); } .inferred { color: var(--drain); } .unknown { color: var(--alert); }\na { color: var(--water); }\na:focus-visible { outline: 2px solid var(--water); outline-offset: 2px; }\ntable { border-collapse: collapse; width: 100%; font-size: 14px; }\ntd, th { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--rule); vertical-align: top; }\nth { font-weight: 600; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }\n\n/* SVG styling via tokens */\n.paper { fill: var(--card); }\n.street { fill: none; stroke: var(--street); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }\n.home-st { stroke: var(--alert); stroke-width: 4; }\n.catch { fill: var(--catch); fill-opacity: .10; stroke: var(--catch); stroke-width: 1.5; stroke-dasharray: 2 4; }\n.catch2 { fill: none; stroke: var(--catch); stroke-opacity: .6; stroke-width: 1.2; stroke-dasharray: 2 5; }\n.chan { fill: none; stroke: var(--water); stroke-width: 6; stroke-linecap: round; stroke-linejoin: round; }\n.culv { fill: none; stroke: var(--water); stroke-width: 5; stroke-dasharray: 8 5; stroke-linecap: butt; }\n.trunk { fill: none; stroke: var(--drain); stroke-width: 4; stroke-dasharray: 7 4; stroke-linejoin: round; }\n.trunk.big { stroke-width: 6; }\n.disch { fill: none; stroke: var(--drain); stroke-width: 3; stroke-dasharray: 2 4; stroke-linecap: round; }\n.screen { fill: var(--card); stroke: var(--drain); stroke-width: 2; }\n.well { fill: var(--card); stroke: var(--drain); stroke-width: 1.5; }\n.branch { fill: none; stroke: var(--drain); stroke-width: 2.5; stroke-dasharray: 5 4; stroke-opacity: .8; }\n.reported { fill: none; stroke: var(--alert); stroke-width: 2.5; stroke-dasharray: 2 4; stroke-linecap: round; }\n.project { fill: none; stroke: #8a5cc4; stroke-width: 7; stroke-opacity: .35; stroke-linecap: round; }\n.a-chan { fill: var(--water); } .a-trunk { fill: var(--drain); } .a-back { fill: var(--alert); }\n.outfall { fill: var(--card); stroke: var(--water); stroke-width: 3; }\n.pump { fill: var(--drain); stroke: var(--card); stroke-width: 1.5; }\n.pumpP { fill: #fff; font: 700 11px var(--body); }\n.house { fill: var(--alert); stroke: var(--card); stroke-width: 2.5; }\n.gauge { fill: var(--water); }\n.lbl { fill: var(--ink); font: 500 11.5px var(--body); paint-order: stroke; stroke: var(--card); stroke-width: 3px; stroke-linejoin: round; }\n.lbl.b { font-weight: 600; } .lbl.s { font-size: 10.5px; font-weight: 400; fill: var(--muted); }\n.lbl.home { fill: var(--alert); font-size: 12.5px; }\n.chanL { fill: var(--water) !important; font-weight: 600; letter-spacing: .03em; }\n.trunkL { fill: var(--drain) !important; }\n.catchL { fill: var(--catch) !important; font-weight: 600; }\n.repL, .backT { fill: var(--alert) !important; }\n.projL { fill: #8a5cc4 !important; font-weight: 600; }\n.lbl.st { fill: var(--muted); font-size: 10px; font-style: italic; font-weight: 400; }\n.elev circle { fill: var(--ink); } .elev text { fill: var(--ink); font: 600 10px var(--body); paint-order: stroke; stroke: var(--card); stroke-width: 3px; }\n.na polygon { fill: var(--ink); } .na text { fill: var(--ink); font: 600 12px var(--body); }\n.scale rect { fill: var(--ink); } .scale rect.w { fill: var(--card); stroke: var(--ink); } .scale text { fill: var(--ink); font: 500 10.5px var(--body); }\n.grid { stroke: var(--rule); stroke-width: 1; } .ax { fill: var(--muted); font: 500 10.5px var(--body); }\n.ground { fill: var(--street); fill-opacity: .25; } .groundL { fill: none; stroke: var(--muted); stroke-width: 2; }\n.bay { stroke: var(--water); stroke-width: 2; stroke-dasharray: 6 4; } .bay2 { stroke: var(--water); stroke-width: 1.2; stroke-dasharray: 2 4; }\n.bayT { fill: var(--water) !important; }\n.pipeX { fill: none; stroke: var(--drain); stroke-width: 2.5; }\n.pumpL { stroke: var(--drain); stroke-width: 3; }\n.back { fill: none; stroke: var(--alert); stroke-width: 2.5; stroke-dasharray: 5 4; }\n.gate { fill: var(--ink); }\n@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto; } }\n:root[data-theme=\"dark\"] { --paper: #1e293b; --card: #0f172a; --rule: #334155; }\nmain { padding: 8px 4px 16px; }\n<\/style>\n<\/head>\n<body>\n<main>\n  <header style=\"display:grid;gap:10px\">\n    <h1>Where Athlone Terrace's stormwater goes<\/h1>\n    <p class=\"lede\">Athlone Terrace sits in a shallow pocket at about 21&nbsp;ft. Its drains (18- and 24-inch pipes) join a county trunk drain that also carries runoff from roughly 627 acres upstream. The trunk continues east as a 48-inch pipe into the Athlone Terrace Pump Station, about 300&nbsp;m from the cul-de-sac near Bay Road and Spring Street. The pumps most likely lift that water into the Atherton Channel at county outfall&nbsp;375, and from there the channel runs north under Marsh Road to the Bayfront Canal and the Bay.<\/p>\n    <p class=\"meta\">Updated Nov 12, 2026 from San Mateo County's public storm-drain GIS, USGS ground elevations, NOAA tide datums and county project records. Items marked <span class=\"tag inferred\">inferred<\/span> follow from the data but aren't confirmed by the county.<\/p>\n  <\/header>\n\n  <figure>\n    <div class=\"frame\"><svg viewBox=\"0 0 880 1000\" role=\"img\" aria-label=\"Plan map: Athlone Way drains join a county trunk pipe that runs east as a 48-inch line into the Athlone Terrace Pump Station near Bay Road and Spring Street; the pumps discharge toward the Atherton Channel culvert at outfall 375, which flows north toward Marsh Road and the Bay.\" class=\"map\">\n<defs><clipPath id=\"clip\"><rect x=\"0\" y=\"0\" width=\"880\" height=\"1000\"/><\/clipPath><\/defs>\n<rect class=\"paper\" x=\"0\" y=\"0\" width=\"880\" height=\"1000\"/>\n<g clip-path=\"url(#clip)\">\n<polygon class=\"catch\" points=\"386.5,877.5 290.9,845.3 299.5,910.5 326.8,978.4 374.1,1038.8 263.0,1205.8 222.6,1251.0 166.7,1258.8 118.7,1305.3 31.7,1282.3 120.1,1150.1 72.5,984.9 36.2,699.2 59.4,524.4 140.8,315.2 290.9,304.8 403.8,288.7 547.3,241.3 727.5,233.9 515.9,680.1 386.5,877.5\"/>\n<polygon class=\"catch2\" points=\"854.5,295.2 958.3,327.0 1236.8,441.3 1225.8,482.2 1344.2,579.2 1271.7,725.7 1170.6,951.8 1134.7,1023.6 1005.6,906.6 1029.4,795.7 912.8,679.6 755.4,382.6 702.6,295.7 854.5,295.2\"/>\n<polyline class=\"street home-st\" points=\"490.0,277.9 492.1,278.3 500.7,278.3 506.3,278.7 506.6,278.7 512.1,278.7 518.7,278.7 523.2,279.2 527.3,279.2\"/>\n<polyline class=\"street\" points=\"-84.2,38.3 -71.1,42.2 -61.1,44.8 -51.1,47.4 -24.8,53.9 -7.2,58.7 -6.9,58.7 1.0,60.9 16.9,64.8 18.3,65.2 34.5,69.6 41.1,71.3 54.2,74.8 68.3,78.7 93.9,85.2 100.8,87.0 116.3,91.7 122.5,93.5 131.1,96.1 138.4,97.8 140.5,98.7 157.0,105.7 184.3,119.1 188.4,121.8 221.2,137.8 246.4,150.0 253.3,153.5 267.8,160.9 284.4,168.7 312.7,183.1 317.8,186.1 341.3,197.4 347.9,200.9 355.1,204.4 369.9,211.8 376.5,215.2 400.3,227.0 421.7,237.4 430.7,237.8 467.3,234.4 504.9,231.3 564.2,226.5\"/>\n<polyline class=\"street\" points=\"564.2,226.5 574.2,225.7 584.3,224.8 585.6,223.9 587.0,222.2 588.0,219.6 589.4,216.5\"/>\n<polyline class=\"street\" points=\"635.0,251.8 637.1,256.5 638.8,260.0 641.9,265.2 644.0,267.4 645.3,268.7 649.8,273.5 651.9,275.7 657.1,279.2 660.9,281.3 667.8,285.2 674.0,287.0 684.7,290.0 692.3,292.2 693.3,292.6 697.8,293.9\"/>\n<polyline class=\"street\" points=\"697.8,293.9 702.3,295.2 714.0,297.4 714.7,297.4 722.3,297.4 726.8,297.9 739.9,298.3 742.7,298.3 748.5,298.3 754.0,298.7 766.1,299.2 782.3,299.6 861.7,302.6 875.9,303.5 890.0,304.4 907.3,304.8\"/>\n<polyline class=\"street\" points=\"133.2,15.2 136.7,16.1 167.4,23.9 170.5,24.8 180.8,30.0 188.4,33.9 192.2,35.7 194.6,37.0 202.9,40.9 217.1,47.8 224.0,51.3 224.7,51.7 230.9,54.4 254.0,65.2 255.4,65.7 256.8,66.5 269.9,72.6 276.8,76.1 277.1,76.1 530.1,197.4 549.7,206.5 568.7,216.5 589.4,216.5 635.0,251.8\"/>\n<polyline class=\"street\" points=\"566.7,495.7 569.8,488.3 576.7,474.4 580.1,466.6 582.2,462.7 584.6,457.4 588.7,449.6 596.7,434.8 599.4,428.7 606.7,414.0 608.8,410.0 613.6,399.6 617.4,392.2 619.5,387.9 622.9,380.9 627.0,372.2 629.8,366.1 632.6,360.5 635.7,354.4 641.2,342.6 643.3,338.3 644.3,331.8 644.3,328.7 644.6,320.0 645.3,297.0 645.7,283.9 651.9,275.7\"/>\n<polyline class=\"street\" points=\"589.4,216.5 590.8,212.6 591.2,211.8 619.5,133.5 626.4,100.9 627.0,98.3 627.7,93.9 632.9,65.2 641.9,34.8 647.7,4.8\"/>\n<polyline class=\"street\" points=\"577.3,307.0 587.0,307.4 606.7,307.9 627.0,308.3 641.5,308.3 660.9,309.2 672.9,309.2 679.5,311.3 687.8,313.9\"/>\n<polyline class=\"street\" points=\"-80.8,91.3 -52.8,105.2 -26.2,118.3 0.7,132.2 26.9,145.2 55.2,159.1 82.1,172.2 103.5,183.1 119.7,191.8 147.4,205.2 179.1,221.8 208.4,236.1 244.7,253.9 270.6,267.0 278.1,267.9 317.5,264.8 354.4,261.8\"/>\n<polyline class=\"street\" points=\"347.2,300.0 347.5,306.1 364.4,314.8 380.3,322.6 406.2,335.7 430.3,347.4 444.5,354.4 465.9,365.3 481.1,373.5 494.9,380.0 510.7,387.9 523.5,394.4 549.1,407.4 569.4,417.4 584.6,424.8 604.6,434.8 620.5,442.2 628.1,446.1\"/>\n<polyline class=\"street\" points=\"742.3,205.2 743.7,201.8 749.2,190.0 772.0,142.2 784.8,124.4 799.6,64.8 819.3,19.6 826.9,2.2 828.6,-3.0 827.2,-7.8\"/>\n<polyline class=\"street\" points=\"113.9,518.7 134.6,535.3 151.2,549.2 169.1,565.7 179.5,569.2 201.5,573.1 213.3,575.3 258.1,580.9 283.7,585.3 314.7,587.4 376.2,593.1 407.2,596.1 430.0,598.3 441.4,601.4 471.7,615.7 500.7,634.0 531.5,653.5 665.7,737.9 705.4,764.4 761.3,798.8 765.4,801.4\"/>\n<polyline class=\"street\" points=\"535.9,482.7 544.9,464.8 552.2,449.6 562.2,429.2 571.1,414.0 579.8,396.6 584.9,385.3 593.9,367.0 600.8,352.2 605.0,343.9 609.8,339.2 630.1,339.2 641.2,342.6\"/>\n<polyline class=\"street\" points=\"664.0,210.9 666.0,204.8 690.9,130.4 700.2,105.7 736.8,-5.2\"/>\n<polyline class=\"street\" points=\"507.3,467.0 514.2,453.1 522.1,437.0 529.0,423.5 538.0,404.8 544.9,391.3 552.8,375.7 560.4,360.0 568.4,343.5 574.2,330.9 576.7,326.1 577.0,319.6 577.3,307.0\"/>\n<polyline class=\"street\" points=\"661.9,103.1 697.4,-19.6\"/>\n<polyline class=\"street\" points=\"504.9,231.3 522.5,193.9 539.7,157.0 559.7,114.4 563.2,91.3 576.7,6.5\"/>\n<polyline class=\"street\" points=\"600.1,215.7 626.0,213.1 649.8,211.3\"/>\n<polyline class=\"street\" points=\"715.0,206.1 736.4,204.4\"/>\n<polyline class=\"street\" points=\"9.3,336.6 41.1,332.2 69.0,329.2 97.3,326.1 141.5,321.8 166.7,319.2 199.5,315.7 227.4,312.6 253.0,309.6 276.4,307.4 308.2,303.9 343.7,300.0 392.4,295.7 408.9,293.9\"/>\n<polyline class=\"street\" points=\"394.1,594.4 394.4,514.0 397.9,499.6 402.4,480.9 407.9,460.9 413.8,442.7 420.0,423.1 426.5,408.7 434.5,393.1 440.0,382.6 445.5,371.8 453.1,355.7 461.1,340.0 467.6,327.0 473.1,316.1 478.7,304.8 484.2,293.5\"/>\n<polyline class=\"project\" points=\"566.7,495.7 569.8,488.3 576.7,474.4 580.1,466.6 582.2,462.7 584.6,457.4 588.7,449.6 596.7,434.8 599.4,428.7 606.7,414.0 608.8,410.0 613.6,399.6 617.4,392.2 619.5,387.9 622.9,380.9 627.0,372.2 629.8,366.1 632.6,360.5 635.7,354.4 641.2,342.6 643.3,338.3 644.3,331.8 644.3,328.7 644.6,320.0 645.3,297.0 645.7,283.9 651.9,275.7\"/>\n<polyline class=\"chan\" points=\"460.4,924.4 492.5,874.0 519.0,830.9 545.6,787.9 571.8,744.9 599.1,699.6\"/>\n<polyline class=\"culv\" points=\"599.1,699.6 539.4,648.3\"/>\n<polyline class=\"chan\" points=\"539.4,648.3 542.5,640.9 550.4,622.2 558.7,603.5 627.0,458.3\"/>\n<polyline class=\"culv\" points=\"627.0,458.3 696.4,304.8\"/>\n<polyline class=\"culv\" points=\"696.4,304.8 737.1,213.1\"/>\n<polyline class=\"culv\" points=\"737.1,213.1 742.0,202.2\"/>\n<polyline class=\"culv\" points=\"742.0,202.2 759.6,163.5\"/>\n<polyline class=\"culv\" points=\"759.6,163.5 788.2,124.8\"/>\n<polyline class=\"culv\" points=\"788.2,124.8 806.1,95.2 806.1,81.3\"/>\n<polyline class=\"chan\" points=\"806.1,81.3 807.5,57.4 822.4,23.0 835.1,-6.5\"/>\n<polyline class=\"trunk\" points=\"118.0,665.7 107.3,657.9 75.6,634.0 43.8,610.1 66.9,533.5 117.3,430.0 168.1,327.0 216.7,321.3 265.7,315.7 315.8,309.6 368.9,301.3 422.4,293.1 439.3,286.5 438.3,280.5 436.9,274.8 456.6,271.3 475.9,267.9 490.0,265.7\"/>\n<polyline class=\"branch\" points=\"1165.1,621.4 1165.7,607.0 1120.9,601.8 1127.4,574.4 1148.1,572.2 1162.6,563.1 1184.0,512.7 1198.5,479.6 1193.7,440.5 1148.1,410.0 1108.1,390.5 1050.5,365.3 1003.5,351.3 949.0,344.4 906.6,340.0 874.5,335.2 873.8,314.8 821.0,308.7 764.7,306.6 720.9,303.9 697.4,302.2\"/>\n<polyline class=\"branch\" points=\"553.5,313.1 552.2,307.9 551.1,302.6 548.0,297.0 540.1,289.6 532.5,282.2 520.4,280.5 506.3,281.3 491.8,282.6 490.7,272.6\"/>\n<polyline class=\"trunk big\" points=\"490.7,272.6 490.0,265.7 489.7,262.6 504.2,254.4 550.1,250.0 596.0,245.7 612.9,243.9\"/>\n<polyline class=\"disch\" points=\"612.9,243.9 639.5,241.8 681.9,237.8 727.5,233.9\"/>\n<polyline class=\"reported\" points=\"453.1,355.7 461.1,340.0 467.6,327.0 473.1,316.1 478.7,304.8 484.2,293.5 490.0,278.3\"/>\n<polygon class=\"a-chan\" points=\"6,0 -6,-4.5 -2.4000000000000004,0 -6,4.5\" transform=\"translate(530.4,812.5) rotate(-58.3)\"/>\n<polygon class=\"a-chan\" points=\"6,0 -6,-4.5 -2.4000000000000004,0 -6,4.5\" transform=\"translate(586.9,543.5) rotate(-64.8)\"/>\n<polygon class=\"a-chan\" points=\"6,0 -6,-4.5 -2.4000000000000004,0 -6,4.5\" transform=\"translate(661.7,381.6) rotate(-65.7)\"/>\n<polygon class=\"a-chan\" points=\"6,0 -6,-4.5 -2.4000000000000004,0 -6,4.5\" transform=\"translate(712.7,268.1) rotate(-66.1)\"/>\n<polygon class=\"a-chan\" points=\"6,0 -6,-4.5 -2.4000000000000004,0 -6,4.5\" transform=\"translate(752.5,179.0) rotate(-65.5)\"/>\n<polygon class=\"a-chan\" points=\"6,0 -6,-4.5 -2.4000000000000004,0 -6,4.5\" transform=\"translate(798.3,108.2) rotate(-58.7)\"/>\n<polygon class=\"a-chan\" points=\"6,0 -6,-4.5 -2.4000000000000004,0 -6,4.5\" transform=\"translate(820.3,27.8) rotate(-66.6)\"/>\n<polygon class=\"a-trunk\" points=\"6,0 -6,-4.5 -2.4000000000000004,0 -6,4.5\" transform=\"translate(46.7,612.2) rotate(-143.0)\"/>\n<polygon class=\"a-trunk\" points=\"6,0 -6,-4.5 -2.4000000000000004,0 -6,4.5\" transform=\"translate(128.1,408.1) rotate(-63.8)\"/>\n<polygon class=\"a-trunk\" points=\"6,0 -6,-4.5 -2.4000000000000004,0 -6,4.5\" transform=\"translate(299.7,311.5) rotate(-6.9)\"/>\n<polygon class=\"a-trunk\" points=\"6,0 -6,-4.5 -2.4000000000000004,0 -6,4.5\" transform=\"translate(752.9,305.8) rotate(-176.6)\"/>\n<polygon class=\"a-trunk\" points=\"6,0 -6,-4.5 -2.4000000000000004,0 -6,4.5\" transform=\"translate(537.7,287.3) rotate(-135.8)\"/>\n<polygon class=\"a-trunk\" points=\"6,0 -6,-4.5 -2.4000000000000004,0 -6,4.5\" transform=\"translate(504.1,281.5) rotate(174.9)\"/>\n<polygon class=\"a-trunk\" points=\"6,0 -6,-4.5 -2.4000000000000004,0 -6,4.5\" transform=\"translate(545.2,250.5) rotate(-5.4)\"/>\n<polygon class=\"a-trunk\" points=\"6,0 -6,-4.5 -2.4000000000000004,0 -6,4.5\" transform=\"translate(592.6,246.0) rotate(-5.4)\"/>\n<polygon class=\"a-trunk\" points=\"6,0 -6,-4.5 -2.4000000000000004,0 -6,4.5\" transform=\"translate(670.2,238.9) rotate(-5.3)\"/>\n<\/g>\n<circle class=\"outfall\" cx=\"727.5\" cy=\"233.9\" r=\"6\"/>\n<circle class=\"outfall\" cx=\"697.4\" cy=\"302.2\" r=\"6\"/>\n<text class=\"lbl b\" x=\"737.5\" y=\"249.9\">Outfall 375<\/text>\n<text class=\"lbl s\" x=\"737.5\" y=\"262.9\">pump discharge enters (assumed)<\/text>\n<text class=\"lbl b\" x=\"687.4\" y=\"306.2\" text-anchor=\"end\">Outfall 376<\/text>\n<rect class=\"screen\" x=\"599.4\" y=\"240.9\" width=\"8\" height=\"8\" transform=\"rotate(45 603.4 244.9)\"/>\n<rect class=\"pump\" x=\"604.9\" y=\"235.9\" width=\"16\" height=\"16\" rx=\"2\"/><text class=\"pumpP\" x=\"612.9\" y=\"247.9\" text-anchor=\"middle\">P<\/text>\n<text class=\"lbl b\" x=\"600.9\" y=\"213.9\" text-anchor=\"end\">Athlone Terrace Pump Station<\/text>\n<text class=\"lbl s\" x=\"600.9\" y=\"226.9\" text-anchor=\"end\">\u25c6 trash screen just upstream (Oct 2024)<\/text>\n\n\n<path class=\"gauge\" d=\"M453.1,929.3 L461.1,944.3 L445.1,944.3 Z\"/>\n<text class=\"lbl b\" x=\"465.1\" y=\"940.3\">County gauge ACUC1 at Caltrain<\/text>\n<text class=\"lbl s\" x=\"465.1\" y=\"953.3\">rain + channel level (dashboard source)<\/text>\n<text class=\"lbl chanL\" x=\"510.7\" y=\"800.1\" text-anchor=\"start\" transform=\"rotate(-52 510.7 800.1)\">ATHERTON CHANNEL (open)<\/text>\n<text class=\"lbl chanL s\" x=\"697.1\" y=\"587.0\" text-anchor=\"start\" transform=\"rotate(-60 697.1 587.0)\">channel in culvert<\/text>\n<text class=\"lbl chanL s\" x=\"793.7\" y=\"21.7\" text-anchor=\"end\">to Marsh Rd \u2192 Haven Ave \u2192 Bayfront Canal \u2192 tide gates \u2192 Bay<\/text>\n<text class=\"lbl trunkL s\" x=\"231.2\" y=\"326.1\" text-anchor=\"start\">County trunk drain (route from 2005 creek map)<\/text>\n<text class=\"lbl trunkL s\" x=\"572.9\" y=\"265.2\" text-anchor=\"start\">48&quot; pipe into station<\/text>\n<text class=\"lbl trunkL s\" x=\"541.8\" y=\"339.2\" text-anchor=\"end\">Athlone Way drains 18\u201324&quot;<\/text>\n<text class=\"lbl trunkL s\" x=\"72.5\" y=\"456.6\" text-anchor=\"start\" transform=\"rotate(-58 72.5 456.6)\">collects ~627 acres from Atherton &amp; North Fair Oaks<\/text>\n<text class=\"lbl trunkL s\" x=\"869.6\" y=\"339.2\" text-anchor=\"end\">pipe from Lindenwood (catchment 376)<\/text>\n<text class=\"lbl catchL\" x=\"241.6\" y=\"782.7\" text-anchor=\"start\">CATCHMENT 375 \u00b7 627 acres<\/text>\n<text class=\"lbl catchL s\" x=\"241.6\" y=\"839.2\" text-anchor=\"start\">everything here drains to outfall 375<\/text>\n<text class=\"lbl repL s\" x=\"262.3\" y=\"413.1\" text-anchor=\"start\">San Benito Ave overflow pipe (reported by a resident)<\/text>\n<text class=\"lbl projL\" x=\"566.0\" y=\"526.1\" text-anchor=\"start\">18th Ave rebuild (2026)<\/text>\n<text class=\"lbl st\" x=\"293.3\" y=\"143.5\" text-anchor=\"start\" transform=\"rotate(21 293.3 143.5)\">Spring St<\/text>\n<text class=\"lbl st\" x=\"214.0\" y=\"43.5\" text-anchor=\"start\" transform=\"rotate(21 214.0 43.5)\">Bay Rd<\/text>\n<text class=\"lbl st\" x=\"69.0\" y=\"156.5\" text-anchor=\"start\" transform=\"rotate(21 69.0 156.5)\">Fair Oaks Ave<\/text>\n<text class=\"lbl st\" x=\"103.5\" y=\"334.8\" text-anchor=\"start\" transform=\"rotate(-4 103.5 334.8)\">Edison Way<\/text>\n<text class=\"lbl st\" x=\"293.3\" y=\"574.0\" text-anchor=\"start\" transform=\"rotate(3 293.3 574.0)\">Middlefield Rd<\/text>\n<text class=\"lbl st\" x=\"403.8\" y=\"534.8\" text-anchor=\"start\" transform=\"rotate(-66 403.8 534.8)\">San Benito Ave<\/text>\n<text class=\"lbl st\" x=\"555.6\" y=\"460.9\" text-anchor=\"start\" transform=\"rotate(-58 555.6 460.9)\">17th Ave<\/text>\n<text class=\"lbl st\" x=\"503.8\" y=\"443.5\" text-anchor=\"start\" transform=\"rotate(-58 503.8 443.5)\">16th Ave<\/text>\n<text class=\"lbl st\" x=\"600.5\" y=\"130.4\" text-anchor=\"start\" transform=\"rotate(-68 600.5 130.4)\">15th Ave<\/text>\n<text class=\"lbl st\" x=\"762.7\" y=\"160.9\" text-anchor=\"start\" transform=\"rotate(-60 762.7 160.9)\">Marsh Rd<\/text>\n<text class=\"lbl st\" x=\"531.5\" y=\"165.2\" text-anchor=\"start\" transform=\"rotate(-60 531.5 165.2)\">Haven Ave<\/text>\n<text class=\"lbl st\" x=\"524.5\" y=\"287.0\" text-anchor=\"start\">Athlone Way<\/text>\n<g class=\"elev\"><circle cx=\"512.1\" cy=\"269.6\" r=\"2.2\"/><text x=\"517.1\" y=\"264.6\" text-anchor=\"start\">21 ft<\/text><\/g>\n<g class=\"elev\"><circle cx=\"578.7\" cy=\"226.1\" r=\"2.2\"/><text x=\"583.7\" y=\"230.1\" text-anchor=\"start\">20 ft<\/text><\/g>\n<g class=\"elev\"><circle cx=\"500.4\" cy=\"195.7\" r=\"2.2\"/><text x=\"495.4\" y=\"190.7\" text-anchor=\"end\">18 ft<\/text><\/g>\n<g class=\"elev\"><circle cx=\"671.6\" cy=\"351.3\" r=\"2.2\"/><text x=\"665.6\" y=\"355.3\" text-anchor=\"end\">27\u201328 ft<\/text><\/g>\n<g class=\"elev\"><circle cx=\"738.5\" cy=\"217.4\" r=\"2.2\"/><text x=\"744.5\" y=\"213.4\" text-anchor=\"start\">22 ft<\/text><\/g>\n<g class=\"elev\"><circle cx=\"804.8\" cy=\"82.2\" r=\"2.2\"/><text x=\"809.8\" y=\"77.2\" text-anchor=\"start\">13 ft<\/text><\/g>\n<g class=\"elev\"><circle cx=\"453.1\" cy=\"938.3\" r=\"2.2\"/><text x=\"443.1\" y=\"942.3\" text-anchor=\"end\">54 ft<\/text><\/g>\n<g class=\"na\" transform=\"translate(840,930)\"><polygon points=\"0,-22 8,6 0,0 -8,6\"/><text x=\"0\" y=\"22\" text-anchor=\"middle\">N<\/text><\/g>\n<g class=\"scale\" transform=\"translate(24,970)\"><rect x=\"0\" y=\"0\" width=\"195.3\" height=\"5\"/><rect class=\"w\" x=\"97.7\" y=\"0\" width=\"97.7\" height=\"5\"/><text x=\"0\" y=\"-6\">0<\/text><text x=\"195.3\" y=\"-6\" text-anchor=\"end\">500 m \u00b7 1,640 ft<\/text><\/g>\n<\/svg><\/div>\n    <div class=\"legend\">\n      <span><i class=\"sw\" style=\"border-color:var(--water)\"><\/i>Atherton Channel, open<\/span>\n      <span><i class=\"sw\" style=\"border-top-style:dashed;border-color:var(--water)\"><\/i>channel in culvert<\/span>\n      <span><i class=\"sw\" style=\"border-top-style:dashed;border-color:var(--drain)\"><\/i>county trunk drain (underground)<\/span>\n      <span><i class=\"sw\" style=\"border-top-style:dotted;border-color:var(--drain)\"><\/i>pump discharge, route assumed<\/span>\n      <span><i class=\"sw\" style=\"border-top-style:dotted;border-color:var(--alert)\"><\/i>overflow pipe reported by a resident<\/span>\n      <span><i class=\"sw\" style=\"border-color:#8a5cc4;opacity:.5;border-top-width:7px\"><\/i>18th Ave project<\/span>\n      <span><i class=\"sw\" style=\"border-top-style:dotted;border-color:var(--catch)\"><\/i>county catchment boundary<\/span>\n      <span>\u25cf spot elevations, ft NAVD88 (USGS)<\/span>\n    <\/div>\n    <figcaption>Plan view, to scale. Pipe and channel lines, outfalls and catchments are from the county's \"Storm Water Dataset\". The two orange trunk lines were digitized by the county from a 2005 creek map, so their routes are approximate. The 48-inch size of the pipe entering the pump station and the 18/24-inch Athlone Way drains come from county project records. The pump station position is from the coordinates in the county's 2023 environmental filing for the trash screen, about 70&nbsp;m from the Bay Rd/Spring St corner; the county GIS doesn't show the station. The thick line is drawn bigger because it's the 48-inch pipe; where the pumps send the water from there is assumed.<\/figcaption>\n  <\/figure>\n\n  <figure>\n    <div class=\"frame\"><svg viewBox=\"0 0 900 340\" role=\"img\" aria-label=\"Side view: the street at 21 ft sits below the channel banks east of it, so a pump lifts its water into the trunk; downstream the ground falls to 3 ft near the Bay, whose highest recorded level is about 9.5 ft.\" class=\"prof\">\n<rect class=\"paper\" x=\"0\" y=\"0\" width=\"900\" height=\"340\"/>\n<line class=\"grid\" x1=\"56\" x2=\"888\" y1=\"300\" y2=\"300\"/><text class=\"ax\" x=\"48\" y=\"304\" text-anchor=\"end\">0<\/text>\n<line class=\"grid\" x1=\"56\" x2=\"888\" y1=\"255\" y2=\"255\"/><text class=\"ax\" x=\"48\" y=\"259\" text-anchor=\"end\">5<\/text>\n<line class=\"grid\" x1=\"56\" x2=\"888\" y1=\"210\" y2=\"210\"/><text class=\"ax\" x=\"48\" y=\"214\" text-anchor=\"end\">10<\/text>\n<line class=\"grid\" x1=\"56\" x2=\"888\" y1=\"165\" y2=\"165\"/><text class=\"ax\" x=\"48\" y=\"169\" text-anchor=\"end\">15<\/text>\n<line class=\"grid\" x1=\"56\" x2=\"888\" y1=\"120\" y2=\"120\"/><text class=\"ax\" x=\"48\" y=\"124\" text-anchor=\"end\">20<\/text>\n<line class=\"grid\" x1=\"56\" x2=\"888\" y1=\"75\" y2=\"75\"/><text class=\"ax\" x=\"48\" y=\"79\" text-anchor=\"end\">25<\/text>\n<line class=\"grid\" x1=\"56\" x2=\"888\" y1=\"30\" y2=\"30\"/><text class=\"ax\" x=\"48\" y=\"34\" text-anchor=\"end\">30<\/text>\n<text class=\"ax\" x=\"14\" y=\"165\" transform=\"rotate(-90 14 165)\" text-anchor=\"middle\">ft NAVD88<\/text>\n<polygon class=\"ground\" points=\"60,30 160,84 220,111 270,116.4 305,106.5 390,57 470,102 620,186.60000000000002 760,275.7 840,255.9 890,264 890,300 60,300\"/>\n<polyline class=\"groundL\" points=\"60,30 160,84 220,111 270,116.4 305,106.5 390,57 470,102 620,186.60000000000002 760,275.7 840,255.9 890,264\"/>\n<line class=\"bay\" x1=\"690\" x2=\"888\" y1=\"214.5\" y2=\"214.5\"/><text class=\"lbl s bayT\" x=\"888\" y=\"208.5\" text-anchor=\"end\">Bay, highest in record \u2248 9.5 ft<\/text>\n<line class=\"bay2\" x1=\"690\" x2=\"888\" y1=\"237.0\" y2=\"237.0\"/><text class=\"lbl s bayT\" x=\"888\" y=\"250.0\" text-anchor=\"end\">average daily high 7.0 ft<\/text>\n<polyline class=\"trunk\" points=\"60,75 215,129\"/><polygon class=\"a-trunk\" points=\"6,0 -6,-4.5 -2.4000000000000004,0 -6,4.5\" transform=\"translate(150.0,106.5) rotate(21.0)\"/>\n<text class=\"lbl s trunkL\" x=\"60\" y=\"133.5\">trunk, 627-acre catchment<\/text>\n<rect class=\"pipeX\" x=\"215\" y=\"124.5\" width=\"66\" height=\"18.0\" rx=\"3\"/>\n<text class=\"lbl s\" x=\"240\" y=\"156.5\" text-anchor=\"middle\">Athlone drains 18\u201324\"<\/text>\n<polyline class=\"trunk big\" points=\"281,134.4 318,163.20000000000002\"/><polygon class=\"a-trunk\" points=\"6,0 -6,-4.5 -2.4000000000000004,0 -6,4.5\" transform=\"translate(299.0,148.8) rotate(38.0)\"/>\n<rect class=\"screen\" x=\"306\" y=\"150.6\" width=\"7\" height=\"7\" transform=\"rotate(45 309.5 154.1)\"/>\n<text class=\"lbl s trunkL\" x=\"312\" y=\"172.5\" text-anchor=\"end\">48\" pipe \u2192<\/text>\n<rect class=\"well\" x=\"318\" y=\"92.1\" width=\"26\" height=\"85.50000000000003\"/>\n<rect class=\"pump\" x=\"323\" y=\"157.79999999999998\" width=\"16\" height=\"16\" rx=\"2\"/><text class=\"pumpP\" x=\"331\" y=\"169.79999999999998\" text-anchor=\"middle\">P<\/text>\n<line class=\"pumpL\" x1=\"331\" y1=\"157.79999999999998\" x2=\"331\" y2=\"109.20000000000002\"/><polygon class=\"a-trunk\" points=\"6,0 -6,-4.5 -2.4000000000000004,0 -6,4.5\" transform=\"translate(331.0,116.4) rotate(-90.0)\"/>\n<text class=\"lbl b\" x=\"331\" y=\"192.60000000000002\" text-anchor=\"middle\">pump station<\/text>\n<polyline class=\"disch\" points=\"331,109.20000000000002 470,156\"/><polygon class=\"a-trunk\" points=\"6,0 -6,-4.5 -2.4000000000000004,0 -6,4.5\" transform=\"translate(420.0,138.9) rotate(14.0)\"/>\n<rect class=\"gate\" x=\"352\" y=\"98.4\" width=\"5\" height=\"14\"/>\n<text class=\"lbl s\" x=\"372\" y=\"206.39999999999998\">flap gate added Nov 2024 (exact spot unknown)<\/text>\n<polyline class=\"culv\" points=\"470,156 620,237\"/><polyline class=\"chan\" points=\"620,237 760,304.5 840,294.6\"/>\n<polygon class=\"a-chan\" points=\"6,0 -6,-4.5 -2.4000000000000004,0 -6,4.5\" transform=\"translate(550.0,199.2) rotate(31.0)\"/><polygon class=\"a-chan\" points=\"6,0 -6,-4.5 -2.4000000000000004,0 -6,4.5\" transform=\"translate(700.0,274.8) rotate(28.0)\"/>\n<circle class=\"outfall\" cx=\"470\" cy=\"156\" r=\"6\"/><text class=\"lbl b\" x=\"480\" y=\"148\">Outfall 375<\/text>\n<path class=\"back\" d=\"M462,147.0 C430,123.6 395,114.6 360,111.0\"/><polygon class=\"a-back\" points=\"7,0 -7,-5.25 -2.8000000000000003,0 -7,5.25\" transform=\"translate(362.0,111.0) rotate(180.0)\"/>\n<text class=\"lbl s backT\" x=\"372\" y=\"220.39999999999998\">storm: channel backs up against the gate;<\/text>\n<text class=\"lbl s backT\" x=\"372\" y=\"233.39999999999998\">if pumps fall behind, the 48\" pipe fills and<\/text>\n<text class=\"lbl s backT\" x=\"372\" y=\"246.39999999999998\">water rises out of the lowest inlets (Athlone Terrace)<\/text>\n<rect class=\"gate\" x=\"837\" y=\"251.4\" width=\"6\" height=\"22\"/><text class=\"lbl s\" x=\"888\" y=\"320\" text-anchor=\"end\">Bayfront Canal tide gates (Bay side \u2192)<\/text>\n<text class=\"lbl b\" x=\"130\" y=\"74\" text-anchor=\"middle\">Atherton / N. Fair Oaks<\/text>\n<text class=\"lbl b\" x=\"228\" y=\"91.20000000000002\" text-anchor=\"start\">pocket 21 ft<\/text>\n<text class=\"lbl b\" x=\"390\" y=\"47\" text-anchor=\"middle\">channel bank 27 ft<\/text>\n<text class=\"lbl b\" x=\"470\" y=\"92\" text-anchor=\"start\">Atherton Channel<\/text>\n<text class=\"lbl b\" x=\"620\" y=\"176.60000000000002\" text-anchor=\"middle\">Marsh Rd 13 ft<\/text>\n<text class=\"lbl b\" x=\"760\" y=\"265.7\" text-anchor=\"middle\">Haven Ave 3 ft<\/text>\n<\/svg><\/div>\n    <figcaption>Side view: elevations to scale, distances schematic. Water from the pocket and the whole upstream trunk flows by gravity through the 48-inch pipe into the station's wet well, and the pumps lift it over the higher ground to the east toward the channel. There are two ways the street floods, and they can happen together: the channel backs up toward the station against the flap gate, or the pumps can't keep up with what the 48-inch pipe delivers. Either way the trunk fills and water comes up first at the lowest inlets, which matches the boil residents have seen over the street drain. If one pump is out, the second mechanism gets much worse. The Bay itself never gets above about 9.5&nbsp;ft, so it can't reach the street directly; the tide matters only at the tide gates at the far end of the canal.<\/figcaption>\n  <\/figure>\n\n  \n\n  <section style=\"display:grid;gap:14px\">\n    <h2>How solid each piece is<\/h2>\n    <div class=\"frame\" style=\"overflow-x:auto;border:1px solid var(--rule);border-radius:6px;background:var(--card)\">\n    <table>\n      <thead><tr><th style=\"width:110px\">Status<\/th><th>Item<\/th><th>Source<\/th><\/tr><\/thead>\n      <tbody>\n        <tr><td><span class=\"tag known\">known<\/span><\/td><td>Athlone Terrace is in county catchment 375 (627 acres), which drains to outfall 375 on the Atherton Channel culvert<\/td><td>County storm-drain GIS<\/td><\/tr>\n        <tr><td><span class=\"tag known\">known<\/span><\/td><td>Street ~21 ft; ground rises to 27\u201328 ft at the channel to the east; Marsh Rd ~13 ft; Haven Ave ~3 ft<\/td><td>USGS 3DEP elevations<\/td><\/tr>\n        <tr><td><span class=\"tag known\">known<\/span><\/td><td>Bay at Redwood City: average daily high 7.0 ft, record in our data \u2248 9.5 ft (NAVD88)<\/td><td>NOAA station 9414523<\/td><\/tr>\n        <tr><td><span class=\"tag known\">known<\/span><\/td><td>Athlone Terrace Pump Station near Bay Rd &amp; Spring St (county-run); flap gate added Nov 2024<\/td><td>County project page and 2023 CEQA filing; residents<\/td><\/tr>\n        <tr><td><span class=\"tag known\">known<\/span><\/td><td>The pipe entering the station is 48-inch reinforced concrete; it carries some groundwater even in dry weather<\/td><td>County bid Q&amp;A, Oct 2023<\/td><\/tr>\n        <tr><td><span class=\"tag known\">known<\/span><\/td><td>18- and 24-inch Athlone Way storm drains carry water to the station (replaced with larger pipes and new inlets in 2002)<\/td><td>Board of Supervisors report, 2002<\/td><\/tr>\n        <tr><td><span class=\"tag known\">known<\/span><\/td><td>Full trash-capture screen installed in the pipe just upstream of the station, Oct 2024; a monitoring device sits in the station's electrical cabinet<\/td><td>County project page; bid Q&amp;A<\/td><\/tr>\n        <tr><td><span class=\"tag inferred\">inferred<\/span><\/td><td>The station sits on the trunk itself, so the trunk's flow goes through the pumps rather than past them<\/td><td>48-inch size + location on the mapped trunk<\/td><\/tr>\n        <tr><td><span class=\"tag inferred\">inferred<\/span><\/td><td>The pumps discharge to the channel at or near outfall 375<\/td><td>Geometry + elevations<\/td><\/tr>\n        <tr><td><span class=\"tag inferred\">inferred<\/span><\/td><td>Storm boils come from the channel and trunk backing up, not from the Bay<\/td><td>Elevations + gauge record<\/td><\/tr>\n        <tr><td><span class=\"tag unknown\">unknown<\/span><\/td><td>Whether any water can bypass the pumps by gravity; pump capacity and on/off levels; the discharge pipe's route; where exactly the flap gate sits; upstream trunk sizes and depths; how the Caltrain gauge's height converts to NAVD88<\/td><td>Ask the county<\/td><\/tr>\n      <\/tbody>\n    <\/table>\n    <\/div>\n  <\/section>\n\n  \n\n  \n<\/main>\n<\/body>\n<\/html>\n";
+{ const v = document.getElementById('appVersion'); if (v) v.textContent = VERSION; }
+// =================================================================
+// STORM DISCUSSION: written forecast discussion. A copy is built into the file; if DISCUSSION_URL is set, a newer one
+// published there replaces it (updated about twice a day when storms are coming).
+// =================================================================
+const DISCUSSION_EMBEDDED = {"issued": "2026-11-17T16:40:00-08:00", "next": "Wednesday ~5:30 AM, or sooner if the forecast changes a lot", "headline": "Cold front Wednesday morning: heaviest rain likely 6\u201310 AM, close to a surge-boosted high tide. Models backed off on peak intensity this afternoon.", "outlook": "storm", "sections": [{"title": "Synopsis", "text": "A deepening low off the Pacific Northwest drags a strong cold front through the Bay Area Wednesday morning. NWS San Francisco expects rain to pick up 4\u20138 AM in the North Bay and sweep across the Peninsula roughly 6\u201310 AM, with isolated thunderstorms possible along the front. Showers and a better chance of thunderstorms follow Wednesday night into Thursday morning as colder air and a surface low move in. NWS storm totals through Friday morning: 1.5\u20132.5 in for most of the Bay Area. Another, weaker front arrives Saturday."}, {"title": "Model trends", "text": "The models agree on a soaking (about 2.5\u20132.9 in through Thursday as of this afternoon) but not on how hard the main burst hits. Around midday HRRR showed close to 0.9 in in a single hour around 7\u20138 AM and about 1.4 in for the wettest 3 hours, which would have been at or above the Mar 2023 and Dec 2022 floods. Later runs cut that back sharply, and RRFS, the NWS blend (NBM) and ECMWF were already lower (roughly 1.1, 1.0 and 0.8 in for the wettest 3 hours at their last check). I couldn't pull the very latest runs while writing this, because the forecast service wasn't responding, so the dashboard's live chart is the place for current numbers. A big drop between runs is common with frontal bands like this one; it doesn't mean the threat is over."}, {"title": "Tide and the channel", "text": "Redwood City high tide is predicted at 7.0 ft (MLLW) at 7:21 AM Wednesday, and NOAA's Bay model adds about 1.5 ft of surge (near 8.6 ft). NWS has a Coastal Flood Advisory from 5 AM Wednesday to 10 AM Thursday. The Bay can't reach the street directly, but a high Bay keeps the Bayfront Canal and Atherton Channel from draining, so the channel can't take water as fast while the heaviest rain may be falling. That overlap is the setup to watch. Thursday's high is a bit higher (7.4 ft predicted at 7:58 AM), in case the Thursday-morning thunderstorms deliver a second burst."}, {"title": "Current observations", "text": "Dry this afternoon. Atherton Channel at Caltrain is essentially empty (0.07 ft; the sensor reads dry below about 0.4 ft), so the system starts with all of its capacity. The ground is damp from Sunday and Monday's rain, so runoff will come quickly."}, {"title": "Uncertainty", "text": "Three things could make Wednesday worse than the latest numbers suggest. (1) Frontal rain bands are narrow: a 10\u201320 mile shift decides whether the heaviest core passes over Atherton. (2) HRRR has under-forecast every big local burst in our records, by about 3\u00d7 in the worst cases (Mar 2023, Dec 2025). (3) Any thunderstorm along the front can drop 0.5 in in 20\u201330 minutes. Timing is uncertain by about \u00b12 hours, which decides how much it overlaps with the high tide. Most likely outcome: water to the garage doors (Yellow) at the peak. Garage + (Red) is plausible if the burst reaches about 1.2 in in 3 hours. Structure-level flooding (Purple) needs a much bigger burst than current guidance shows."}, {"title": "What to do tonight", "text": "\u2022 Move cars out of the cul-de-sac before 6 AM.\n\u2022 Clear leaves from the street drain grates, yard drains and the ditch behind the houses this evening. The first big wind of the season brings down leaves, and a clogged grate floods the street at much lower rain totals.\n\u2022 Seal the dryer vent and low wall openings, and set sandbags at the garage door and the back of the house.\n\u2022 Wind Advisory overnight with gusts up to 50 mph near the coast: power outages are possible. The pump station needs power. If you lose power during the burst, assume the pumps may be slow and watch the street closely. Whether the station has backup power is a question for the county.\n\u2022 Glance at the pump station's status lights tonight if it's easy to; a red light before the storm is worth reporting.\n\u2022 During the peak, take a photo of the street with the time visible. Every documented storm improves the warning levels.\n\u2022 Keep the dashboard open in a tab. It records the forecast vs. what actually falls, which improves the bias factor, and the 1-hour burst alarm needs live readings.\n\u2022 Don't drive or walk through moving water on the street."}], "sources": ["NWS San Francisco Area Forecast Discussion 1:54 PM Tue Nov 17", "NWS alerts", "NOAA Tides & Currents 9414523 predictions + SF Bay OFS", "Open-Meteo HRRR / RRFS / NBM / ECMWF (early afternoon runs)", "County gauge feed (Caltrain)"]};
+const DISCUSSION_URL = 'https://raw.githubusercontent.com/jasondahui/athlone-flood-monitor/main/discussion.json';   // updated by the scheduled discussion task
+function renderDiscussion(d) {
+    const box = document.getElementById('discussionBox'); if (!box || !d) return;
+    const issued = new Date(d.issued), ageH = (Date.now() - issued.getTime()) / 3600000;
+    const when = issued.toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+    box.classList.remove('hidden');
+    document.getElementById('discMeta').innerText = `issued ${when}` + (ageH > 18 ? ` · ${Math.round(ageH)} h old, may be out of date` : '') + (d.next && ageH <= 18 ? ` · next: ${d.next}` : '');
+    document.getElementById('discMeta').className = 'text-xs ' + (ageH > 18 ? 'text-amber-300' : 'text-slate-400');
+    document.getElementById('discHeadline').innerText = d.headline || '';
+    document.getElementById('discBody').innerHTML = (d.sections || []).map(s => `<div><div class="font-semibold text-slate-200">${escapeHtml(s.title)}</div><div class="whitespace-pre-line leading-relaxed">${escapeHtml(s.text)}</div></div>`).join('')
+        + (d.sources?.length ? `<div class="text-xs text-slate-500">Based on: ${d.sources.map(escapeHtml).join(' · ')}. Written by Claude (AI) from these sources; it is not an official forecast. Follow NWS warnings.</div>` : '');
+}
+renderDiscussion(DISCUSSION_EMBEDDED);
+if (DISCUSSION_URL) fetchJson(DISCUSSION_URL + (DISCUSSION_URL.includes('?') ? '&' : '?') + 't=' + Date.now(), 15000, 1)
+    .then(d => { if (d?.issued && new Date(d.issued) > new Date(DISCUSSION_EMBEDDED.issued)) renderDiscussion(d); }).catch(e => console.warn('discussion unavailable', e));
+applyTextSize();
+(function loadMap() {
+    const f = document.getElementById('mapFrame'); if (!f) return;
+    const fit = () => { try { f.contentDocument.documentElement.style.zoom = uiScale(); f.style.height = Math.ceil(f.contentDocument.body.getBoundingClientRect().height) + 24 + 'px'; } catch (e) { } };   // body rect already includes the zoom; scrollHeight would never shrink
+    f.addEventListener('load', () => { fit(); setTimeout(fit, 800); setTimeout(fit, 2500); });
+    window.addEventListener('resize', () => setTimeout(fit, 200));
+    f.srcdoc = MAP_HTML;
+})();
+
+</script>
+</body>
+</html>
