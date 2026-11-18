@@ -14,9 +14,11 @@ county Atherton Channel gauges).
   (outlook = "quiet"). Otherwise leave it alone.
 
 ## Format (`discussion.json`)
-`issued` (ISO time with offset), `next` (plain words), `headline` (1–2 sentences), `outlook` ("storm" | "quiet"),
+`issued` (ISO time with offset), `next` (plain words), `headline` (1 sentence), `summary` (3–4 short bullet strings, each
+under ~25 words: the most important things a neighbor needs, shown in a highlighted box that is visible without expanding —
+timing of the main threat, most likely street level, what changed, the one or two key actions), `outlook` ("storm" | "quiet"),
 `sections` [{title, text}] — usually Synopsis, Model trends, Tide and the channel, Current observations, Uncertainty,
-What to do — and `sources` [strings]. Plain text; use "\n• " for bullet lists.
+What to do — and `sources` [strings]. Plain text only (no ** or other markup); use "\n• " for bullet lists.
 
 ## Content rules
 - Write like an NWS forecaster explaining to neighbors: trends, observations, uncertainty, plain words.
@@ -24,8 +26,9 @@ What to do — and `sources` [strings]. Plain text; use "\n• " for bullet list
   ≥ 1.18, Purple (structure) ≥ 1.43 in per 3 h with the 1.25 HRRR bias; 1-hour burst ≥ 0.40 in → at least Yellow.
   HRRR has under-forecast big local bursts by ~3×. Morning high tides with surge slow channel drainage.
 - Say clearly what changed since the last discussion and why it matters.
-- Practical directions where relevant (cars out of the cul-de-sac, clear drain grates and the rear ditch, dryer vent
-  and low openings, sandbags, power outages can slow the pumps, timestamped photos at the peak, keep the page open).
+- Practical directions where relevant, written for the whole street, never for one particular house (cars out of the
+  cul-de-sac, clear street drain grates and yard drains, sandbags, power outages can slow the pumps, timestamped photos
+  at the peak, keep the page open, don't walk or drive through moving water).
 - **Privacy: never name a house number, a person, or exact coordinates.** Say "Athlone Terrace" or "the street".
 - Never invent numbers. If a source is missing from the snapshot, say so.
 - Not an official forecast; defer to NWS warnings.

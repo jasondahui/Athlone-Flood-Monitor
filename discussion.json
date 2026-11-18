@@ -1,7 +1,7 @@
 {
   "issued": "2026-11-17T16:40:00-08:00",
   "next": "Wednesday ~5:30 AM, or sooner if the forecast changes a lot",
-  "headline": "Cold front Wednesday morning: heaviest rain likely 6–10 AM, close to a surge-boosted high tide. Models backed off on peak intensity this afternoon.",
+  "headline": "Cold front Wednesday morning: heaviest rain likely 6–10 AM, close to a surge-boosted 7:21 AM high tide. Models backed off on peak intensity this afternoon.",
   "outlook": "storm",
   "sections": [
     {
@@ -26,8 +26,20 @@
     },
     {
       "title": "What to do tonight",
-      "text": "• Move cars out of the cul-de-sac before 6 AM.\n• Clear leaves from the street drain grates, yard drains and the ditch behind the houses this evening. The first big wind of the season brings down leaves, and a clogged grate floods the street at much lower rain totals.\n• Seal the dryer vent and low wall openings, and set sandbags at the garage door and the back of the house.\n• Wind Advisory overnight with gusts up to 50 mph near the coast: power outages are possible. The pump station needs power. If you lose power during the burst, assume the pumps may be slow and watch the street closely. Whether the station has backup power is a question for the county.\n• Glance at the pump station's status lights tonight if it's easy to; a red light before the storm is worth reporting.\n• During the peak, take a photo of the street with the time visible. Every documented storm improves the warning levels.\n• Keep the dashboard open in a tab. It records the forecast vs. what actually falls, which improves the bias factor, and the 1-hour burst alarm needs live readings.\n• Don't drive or walk through moving water on the street."
+      "text": "• Move cars out of the cul-de-sac before 6 AM.\n• Clear leaves from the street drain grates, yard drains and the ditch behind the houses this evening. The first big wind of the season brings down leaves, and a clogged grate floods the street at much lower rain totals.\n• If you use sandbags, set them before bed; the burst may arrive before daylight.\n• Wind Advisory overnight with gusts up to 50 mph near the coast: power outages are possible. The pump station needs power. If you lose power during the burst, assume the pumps may be slow and watch the street closely. Whether the station has backup power is a question for the county.\n• Glance at the pump station's status lights tonight if it's easy to; a red light before the storm is worth reporting.\n• During the peak, take a photo of the street with the time visible. Every documented storm improves the warning levels.\n• Keep the dashboard open in a tab. It records the forecast vs. what actually falls, which improves the bias factor, and the 1-hour burst alarm needs live readings.\n• Don't drive or walk through moving water on the street."
     }
   ],
-  "sources": ["NWS San Francisco Area Forecast Discussion 1:54 PM Tue Nov 17", "NWS alerts", "NOAA Tides & Currents 9414523 predictions + SF Bay OFS", "Open-Meteo HRRR / RRFS / NBM / ECMWF (early afternoon runs)", "County gauge feed (Caltrain)"]
+  "sources": [
+    "NWS San Francisco Area Forecast Discussion 1:54 PM Tue Nov 17",
+    "NWS alerts",
+    "NOAA Tides & Currents 9414523 predictions + SF Bay OFS",
+    "Open-Meteo HRRR / RRFS / NBM / ECMWF (early afternoon runs)",
+    "County gauge feed (Caltrain)"
+  ],
+  "summary": [
+    "Main burst Wednesday about 6–10 AM, overlapping a surge-boosted 7:21 AM high tide (~8.6 ft) that slows channel drainage.",
+    "Most likely: water up to garage doors (Yellow) at the peak; Garage + (Red) if the wettest 3 hours reach ~1.2 in.",
+    "Models cut peak intensity this afternoon, but HRRR has under-forecast big bursts here by up to 3×; don't count on the drop.",
+    "Tonight: cars out of the cul-de-sac before 6 AM, clear street drain grates, sandbags set before bed."
+  ]
 }
