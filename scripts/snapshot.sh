@@ -3,12 +3,15 @@
 # Saves the inputs the discussion writer needs into data/snapshot.json. No keys, all public sources.
 set -uo pipefail
 LAT=37.477; LON=-122.192
-get() { curl -sS -L --max-time 60 --retry 2 -A "athlone-flood-monitor (github.com/jasondahui/athlone-flood-monitor)" "$1" || echo 'null'; }
+get() { curl -sS -L --max-time 45 --retry 1 -A "athlone-flood-monitor (github.com/jasondahui/athlone-flood-monitor)" "$1" || echo 'null'; }
 asjson() { jq -c . 2>/dev/null || echo 'null'; }
 NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 TODAY=$(TZ=America/Los_Angeles date +%Y%m%d); END=$(TZ=America/Los_Angeles date -d '+3 day' +%Y%m%d)
 
-models=$(get "https://api.open-meteo.com/v1/forecast?latitude=$LAT&longitude=$LON&hourly=precipitation&precipitation_unit=inch&timezone=America%2FLos_Angeles&past_days=1&forecast_days=4&models=ncep_hrrr_conus,ncep_rrfs_conus,ncep_nbm_conus,ecmwf_ifs025,gfs_seamless" | asjson)
+models=$(for m in ncep_hrrr_conus ncep_rrfs_conus ncep_nbm_conus ecmwf_ifs025 gfs_seamless; do
+  get "https://api.open-meteo.com/v1/forecast?latitude=$LAT&longitude=$LON&hourly=precipitation&precipitation_unit=inch&timezone=America%2FLos_Angeles&past_days=1&forecast_days=4&models=$m" \
+    | jq -c --arg m "$m" '{($m): (if .hourly then {time: .hourly.time, precip_in: .hourly.precipitation} else {error: (.reason // "no data")} end)}' 2>/dev/null || echo "{\"$m\": {\"error\": \"fetch failed\"}}"
+done | jq -s -c 'add')
 hrrr15=$(get "https://api.open-meteo.com/v1/forecast?latitude=$LAT&longitude=$LON&minutely_15=precipitation&precipitation_unit=inch&timezone=America%2FLos_Angeles&forecast_days=2&models=ncep_hrrr_conus" | asjson)
 runs=$(for m in ncep_hrrr_conus ncep_rrfs_conus; do get "https://api.open-meteo.com/data/$m/static/meta.json" | jq -c --arg m "$m" '{($m): {init: .last_run_initialisation_time, available: .last_run_availability_time}}' 2>/dev/null; done | jq -s 'add // {}')
 afd_id=$(get "https://api.weather.gov/products/types/AFD/locations/MTR" | jq -r '."@graph"[0]."@id" // empty')
