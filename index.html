@@ -135,12 +135,17 @@
     <!-- Satellite (Windy embed) -->
     <section class="bg-slate-800 p-4 sm:p-6 rounded-2xl border border-slate-700 shadow-xl space-y-3">
         <div class="flex flex-wrap items-baseline justify-between gap-2">
-            <h3 class="text-md font-semibold text-slate-300">Satellite</h3>
-            <a href="https://www.windy.com/-Satellite-satellite?satellite,37.477,-122.192,7" target="_blank" rel="noopener" class="text-xs text-sky-300 underline">Open in Windy ↗</a>
+            <div class="flex items-center gap-3">
+                <h3 class="text-md font-semibold text-slate-300">Satellite &amp; radar</h3>
+                <div class="inline-flex rounded-lg border border-slate-600 overflow-hidden text-xs" role="group">
+                    <button type="button" id="wxBtn-satellite" onclick="setWxLayer('satellite')" style="padding:.3rem .7rem">Satellite</button>
+                    <button type="button" id="wxBtn-radar" onclick="setWxLayer('radar')" style="padding:.3rem .7rem;border-left:1px solid #475569">Radar</button>
+                </div>
+            </div>
+            <a id="wxOpen" href="https://www.windy.com/?satellite,37.477,-122.192,7" target="_blank" rel="noopener" class="text-xs text-sky-300 underline">Open in Windy ↗</a>
         </div>
-        <iframe id="windyFrame" title="Windy satellite view" loading="lazy" class="w-full rounded-xl border border-slate-700" style="height:460px"
-            src="https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=in&metricTemp=%C2%B0F&metricWind=mph&zoom=7&overlay=satellite&product=satellite&level=surface&lat=37.25&lon=-122.6&detailLat=37.477&detailLon=-122.192&marker=true" frameborder="0"></iframe>
-        <p class="text-[0.7rem] text-slate-500">Satellite imagery by <a class="underline" href="https://www.windy.com" target="_blank" rel="noopener">Windy.com</a>. Use the timeline to loop recent images; incoming fronts show up as a band of bright cloud approaching from the west or northwest.</p>
+        <iframe id="windyFrame" title="Windy satellite and radar view" loading="lazy" class="w-full rounded-xl border border-slate-700" style="height:460px" frameborder="0"></iframe>
+        <p class="text-[0.7rem] text-slate-500">Satellite imagery by <a class="underline" href="https://www.windy.com" target="_blank" rel="noopener">Windy.com</a>. Satellite shows the clouds: an incoming front is a band of bright cloud approaching from the west or northwest. Radar shows where rain is falling now; yellow, orange and red are the heavy cores. Press ▶ to loop the last few hours. Windy's embed can show one layer at a time.</p>
     </section>
 
     <!-- Drainage map -->
@@ -232,6 +237,7 @@
         </div>
         <details class="text-xs text-slate-500"><summary class="cursor-pointer text-slate-400">Version <span id="appVersion"></span>: change history</summary>
             <ul class="list-disc pl-5 mt-1 space-y-0.5">
+                <li><b>2.38</b> (Nov 18, 2026): Satellite / Radar toggle on the Windy view.</li>
                 <li><b>2.37</b> (Nov 18, 2026): risk card and storm library collapse together, cut off just below the model consensus line; Windy satellite view added below them.</li>
                 <li><b>2.36</b> (Nov 17, 2026): Storm discussion collapses to a one-line bar like the NWS alerts; tap to open the summary and full text.</li>
                 <li><b>2.35</b> (Nov 17, 2026): the chart's 3-hour line and level strip follow the model consensus (matching the rating), with a shaded band for the lowest-to-highest model.</li>
@@ -284,7 +290,7 @@ const TZ = 'America%2FLos_Angeles';
 const GATE_DATE = '2024-11-01';          // county flap gate installed Nov 2024
 const NAVD_OFFSET = 1.18;                // NOAA 9414523: NAVD88 = MLLW − 1.18 ft
 const STREET_NAVD = 21;                  // USGS 3DEP ground elevation on Athlone Way
-const VERSION = '2.37 (Nov 18, 2026)';
+const VERSION = '2.38 (Nov 18, 2026)';
 // Text size: the page is rem-based, so one root percentage scales everything; the chart and map follow it
 const uiScale = () => (storageGet('athlone_textsize', 115)) / 100;
 function applyTextSize() {
@@ -1558,6 +1564,22 @@ window.addEventListener('resize', () => { clearTimeout(window._rlT); window._rlT
 (() => { const rc = document.getElementById('riskCardEl'); if (rc && 'MutationObserver' in window)
     new MutationObserver(() => { clearTimeout(window._rlM); window._rlM = setTimeout(applyRiskLibCollapse, 50); }).observe(rc, { childList: true, subtree: true, characterData: true }); })();
 setTimeout(applyRiskLibCollapse, 0);
+
+// Windy view: one layer at a time (the embed has no combined radar + satellite layer). Choice remembered in this browser.
+const WX_LAYERS = {
+    satellite: { zoom: 7, lat: 37.25, lon: -122.6, extra: '' },     // wider, centered offshore to see fronts coming in
+    radar:     { zoom: 8, lat: 37.40, lon: -122.30, extra: '&radarRange=-1' },
+};
+function setWxLayer(name) {
+    const L = WX_LAYERS[name] || WX_LAYERS.satellite; name = WX_LAYERS[name] ? name : 'satellite';
+    storageSet('athlone_wx_layer', name);
+    const f = document.getElementById('windyFrame'); if (!f) return;
+    f.src = `https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=in&metricTemp=%C2%B0F&metricWind=mph&zoom=${L.zoom}&overlay=${name}&product=${name}&level=surface&lat=${L.lat}&lon=${L.lon}&detailLat=37.477&detailLon=-122.192&marker=true${L.extra}`;
+    const o = document.getElementById('wxOpen'); if (o) o.href = `https://www.windy.com/?${name},37.477,-122.192,${L.zoom}`;
+    Object.keys(WX_LAYERS).forEach(k => { const b = document.getElementById('wxBtn-' + k); if (!b) return;
+        b.style.background = k === name ? '#0284c7' : 'transparent'; b.style.color = k === name ? '#fff' : '#cbd5e1'; b.setAttribute('aria-pressed', k === name); });
+}
+setWxLayer(storageGet('athlone_wx_layer', 'satellite'));
 
 </script>
 </body>
