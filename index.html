@@ -82,6 +82,7 @@
                 <div class="flex justify-between gap-2"><span>Max tide:</span><span id="statTide" class="font-bold text-white text-right">--</span></div>
                 <div class="flex justify-between gap-2"><span>Storm surge:</span><span id="statSurge" class="font-bold text-white text-right">--</span></div>
             </div>
+            <div id="modelTable" class="space-y-1 text-xs text-slate-300 pt-2 border-t border-slate-700"></div>
             <div id="riskCaveat" class="text-xs text-amber-300/90 leading-snug"></div>
 
             <div class="pt-3 border-t border-slate-700 space-y-2 text-xs">
@@ -91,11 +92,13 @@
                 </div>
                 <label class="flex justify-between items-center gap-2 text-slate-400">Flap gate on outfall (installed Nov 2024)
                     <input id="setGate" type="checkbox" class="accent-sky-500" onchange="saveSettings()"></label>
+                <label class="flex justify-between items-center gap-2 text-slate-400">Rate on
+                    <select id="setRating" class="bg-slate-900 border border-slate-700 rounded p-1 text-slate-200" onchange="saveSettings()"><option value="consensus">Model consensus (HRRR, RRFS, NBM)</option><option value="hrrr">HRRR only</option></select></label>
                 <label class="flex justify-between items-center gap-2 text-slate-400">HRRR rain bias factor (×)
                     <input id="setBias" type="number" step="0.05" min="0.5" max="4" class="w-20 bg-slate-900 border border-slate-700 rounded p-1 text-slate-200 text-right" onchange="saveSettings()"></label>
                 <p id="learnedBias" class="text-[0.7rem] text-slate-400 leading-snug"></p>
                 <div id="thresholdTable" class="text-slate-400 space-y-1 pt-1"></div>
-                <p class="text-[0.7rem] text-slate-500 leading-snug">The rating uses the hardest 3 hours of rain at the Caltrain gauge (measured for the past, HRRR forecast × bias for the future). Thresholds calibrate from the storms you've labeled, within the active gate setting. Pre-gate storms still set lower bounds, since the gate can only help. A live channel level at county Monitoring, Watch or Warning raises the rating to at least BLUE, GREEN or YELLOW.</p>
+                <p class="text-[0.7rem] text-slate-500 leading-snug">The rating uses the hardest 3 hours of rain at the Caltrain gauge (measured for the past, forecast for the future). By default the future part is the consensus: each model's hardest 3 hours (HRRR × its bias factor; RRFS and NBM × 1.00 until this browser has learned their bias from 8+ storms), then the middle value. Storm-library replays use archived HRRR only. Thresholds calibrate from the storms you've labeled, within the active gate setting. Pre-gate storms still set lower bounds, since the gate can only help. A live channel level at county Monitoring, Watch or Warning raises the rating to at least BLUE, GREEN or YELLOW.</p>
             </div>
         </div>
 
@@ -215,6 +218,7 @@
         </div>
         <details class="text-xs text-slate-500"><summary class="cursor-pointer text-slate-400">Version <span id="appVersion"></span>: change history</summary>
             <ul class="list-disc pl-5 mt-1 space-y-0.5">
+                <li><b>2.34</b> (Nov 17, 2026): rating uses the model consensus (middle of HRRR, RRFS and NBM hardest 3 h) instead of HRRR alone; per-model table on the risk card; RRFS/NBM forecasts logged for bias learning. Setting to switch back to HRRR only.</li>
                 <li><b>2.33</b> (Nov 17, 2026): color-coded summary box at the top of the Storm discussion (flood risk, forecast changes, models, timing, tide, actions); action items written for the whole street.</li>
                 <li><b>2.31</b> (Nov 17, 2026): public copy on GitHub; the Storm discussion updates automatically from an hourly data snapshot.</li>
                 <li><b>2.30</b> (Nov 17, 2026): expandable Storm discussion under the title: a written read of the upcoming storm (trends, tide timing, observations, uncertainty, what to do), updated when storms are coming.</li>
@@ -263,7 +267,7 @@ const TZ = 'America%2FLos_Angeles';
 const GATE_DATE = '2024-11-01';          // county flap gate installed Nov 2024
 const NAVD_OFFSET = 1.18;                // NOAA 9414523: NAVD88 = MLLW − 1.18 ft
 const STREET_NAVD = 21;                  // USGS 3DEP ground elevation on Athlone Way
-const VERSION = '2.33 (Nov 17, 2026)';
+const VERSION = '2.34 (Nov 17, 2026)';
 // Text size: the page is rem-based, so one root percentage scales everything; the chart and map follow it
 const uiScale = () => (storageGet('athlone_textsize', 115)) / 100;
 function applyTextSize() {
@@ -532,22 +536,24 @@ const stageLevelOf = v => v == null ? 0 : v >= CH_THRESH.warning ? 3 : v >= CH_T
 // =================================================================
 function getSettings() {
     const s = storageGet('athlone_settings', {});
-    return { bias: typeof s.bias === 'number' ? s.bias : DEFAULTS.bias, gate: typeof s.gate === 'boolean' ? s.gate : DEFAULTS.gate };
+    return { bias: typeof s.bias === 'number' ? s.bias : DEFAULTS.bias, gate: typeof s.gate === 'boolean' ? s.gate : DEFAULTS.gate,
+             rating: s.rating === 'hrrr' ? 'hrrr' : 'consensus' };
 }
 function saveSettings() {
     const bias = parseFloat(document.getElementById('setBias').value), gate = document.getElementById('setGate').checked;
-    storageSet('athlone_settings', { bias: isNaN(bias) ? getSettings().bias : bias, gate });
+    const rating = document.getElementById('setRating')?.value === 'hrrr' ? 'hrrr' : 'consensus';
+    storageSet('athlone_settings', { bias: isNaN(bias) ? getSettings().bias : bias, gate, rating });
     refreshAll();
 }
 
 // =================================================================
 // BIAS LEARNER: compares what HRRR forecast 3-6 h ahead with what the gauge then measured.
-// Log (athlone_fc_log): { slotMs: { f: raw HRRR in/h, lead: h, mA: Caltrain in/h, mR: Redwood City in/h } }
+// Log (athlone_fc_log): { slotMs: { f: raw HRRR in/h, fR: raw RRFS, fN: raw NBM (same run time), lead: h, mA: Caltrain in/h, mR: Redwood City in/h } }
 // Events are chosen on forecast OR measured rain, so busts in both directions count (choosing only storms
 // that turned out wet would make HRRR look worse than it is).
 // =================================================================
 const FC_LOG_KEY = 'athlone_fc_log', LEARN_MIN_EVENTS = 8;
-function logForecastSlots(omBy, nowBin) {
+function logForecastSlots(omBy, nowBin, others = {}) {
     const log = storageGet(FC_LOG_KEY, {}), now = Date.now();
     Object.entries(omBy).forEach(([k, v]) => {
         const slot = +k, lead = (slot - now) / 3600000;
@@ -555,7 +561,10 @@ function logForecastSlots(omBy, nowBin) {
         if (lead < 24) log[slot] = { ...(log[slot] || {}), fLast: +(+v).toFixed(3) };   // newest forecast made before the hour starts (for the chart)
         if (lead < 3 || lead >= 6) return;
         const e = log[slot] || {};
-        if (e.f == null || Math.abs(lead - 4.5) < Math.abs((e.lead ?? 99) - 4.5)) log[slot] = { ...e, f: +(+v).toFixed(3), lead: +lead.toFixed(2) };
+        if (e.f == null || Math.abs(lead - 4.5) < Math.abs((e.lead ?? 99) - 4.5)) {
+            const o = {}; Object.entries(others).forEach(([fk, by]) => { if (by[slot] != null) o[fk] = +(+by[slot]).toFixed(3); });   // fR = RRFS, fN = NBM, same lead
+            log[slot] = { ...e, f: +(+v).toFixed(3), lead: +lead.toFixed(2), ...o };
+        }
     });
     const cutoff = now - 150 * 864e5; Object.keys(log).forEach(k => { if (+k < cutoff) delete log[k]; });
     storageSet(FC_LOG_KEY, log);
@@ -572,11 +581,11 @@ function logMeasuredSlots(multi, nowBin) {
     });
     if (changed) storageSet(FC_LOG_KEY, log);
 }
-function learnBias(log = storageGet(FC_LOG_KEY, {})) {
-    const hrs = Object.keys(log).map(Number).filter(k => log[k].f != null && log[k].mA != null).sort((a, b) => a - b);
+function learnBias(log = storageGet(FC_LOG_KEY, {}), fk = 'f') {
+    const hrs = Object.keys(log).map(Number).filter(k => log[k][fk] != null && log[k].mA != null).sort((a, b) => a - b);
     const events = []; let cur = null, lastWet = -Infinity;
     hrs.forEach(h => {
-        const e = log[h], wet = e.f >= 0.02 || e.mA >= 0.02 || (e.mR ?? 0) >= 0.02;
+        const e = log[h], wet = e[fk] >= 0.02 || e.mA >= 0.02 || (e.mR ?? 0) >= 0.02;
         if (!wet) return;
         if (!cur || h - lastWet > 6 * 3600000) { cur = { hours: [] }; events.push(cur); }
         cur.hours.push(h); lastWet = h;
@@ -585,12 +594,12 @@ function learnBias(log = storageGet(FC_LOG_KEY, {})) {
     events.forEach(ev => {
         const a = ev.hours[0], b = ev.hours[ev.hours.length - 1], slots = [];
         for (let h = a; h <= b; h += 3600000) slots.push(log[h] || {});
-        const have = slots.filter(x => x.f != null && x.mA != null).length;
+        const have = slots.filter(x => x[fk] != null && x.mA != null).length;
         if (have < Math.max(3, 0.7 * slots.length)) return;   // too many hours without both a forecast and a measurement
         const sumA = slots.reduce((t, x) => t + (x.mA || 0), 0), sumR = slots.reduce((t, x) => t + (x.mR || 0), 0);
         const useR = sumR >= 0.3 && sumA < 0.4 * sumR;   // same backup-gauge rule as the rest of the dashboard
         const peak = arr => { let p = 0; arr.forEach((_, i) => { p = Math.max(p, (arr[i] || 0) + (arr[i - 1] || 0) + (arr[i - 2] || 0)); }); return p; };
-        const m3 = peak(slots.map(x => useR ? x.mR : x.mA)), f3 = peak(slots.map(x => x.f));
+        const m3 = peak(slots.map(x => useR ? x.mR : x.mA)), f3 = peak(slots.map(x => x[fk]));
         if (Math.max(m3, f3) < 0.2) return;
         res.push({ start: a, m3: +m3.toFixed(2), f3: +f3.toFixed(2), ratio: Math.max(m3, 0.02) / Math.max(f3, 0.05), gauge: useR ? 'Redwood City' : 'Caltrain' });
     });
@@ -600,6 +609,12 @@ function learnBias(log = storageGet(FC_LOG_KEY, {})) {
     return { n: res.length, factor: +Math.min(4, Math.max(0.5, Math.exp(med))).toFixed(2), events: res };
 }
 function useLearnedBias() { const L = learnBias(); if (L.factor) { storageSet('athlone_settings', { ...getSettings(), bias: L.factor }); refreshAll(); } }
+// Second-opinion models: no local track record yet, so they start at ×1.00 and switch to their learned factor
+// once this browser has logged LEARN_MIN_EVENTS rain events for them.
+function modelFactor(key, hrrrBias) {
+    if (key === 'f') return hrrrBias;
+    const L = learnBias(undefined, key); return L.n >= LEARN_MIN_EVENTS ? L.factor : 1;
+}
 
 function resetSettings() { storageSet('athlone_settings', {}); refreshAll(); }
 
@@ -608,8 +623,10 @@ function renderSettings(cal, s) {
     const L = learnBias(), lb = document.getElementById('learnedBias');
     if (lb) lb.innerHTML = !L.n ? 'Learned from this browser: no rain events logged yet. The page records what HRRR forecast 3–6 h ahead and compares it with the gauge afterwards.'
         : `Learned from this browser: <b class="text-slate-200">×${L.factor.toFixed(2)}</b> from ${L.n} event${L.n === 1 ? '' : 's'} (median of measured ÷ forecast hardest 3 h)${L.n < LEARN_MIN_EVENTS ? ` · needs ${LEARN_MIN_EVENTS}+ to be trusted` : ''}. `
+          + (() => { const t = [['RRFS', 'fR'], ['NBM', 'fN']].map(([n, k]) => { const M = learnBias(undefined, k); return M.n ? `${n} ×${M.factor.toFixed(2)} (${M.n})` : ''; }).filter(Boolean); return t.length ? `Second opinions so far: ${t.join(', ')}; used once ${LEARN_MIN_EVENTS}+ events. ` : ''; })()
           + (Math.abs(L.factor - s.bias) >= 0.05 ? `<button onclick="useLearnedBias()" class="underline text-sky-300 hover:text-sky-200">Use ×${L.factor.toFixed(2)}</button>` : '(matches the setting)');
     document.getElementById('setGate').checked = s.gate;
+    const sr = document.getElementById('setRating'); if (sr) sr.value = s.rating;
     const row = (label, name, color) => `<div class="flex justify-between gap-2"><span><span class="${color}">■</span> ${label} ≥ <b class="text-white">${cal.thresh[name].toFixed(2)} in / 3 h</b></span><span class="text-[0.7rem] text-slate-500 text-right">${cal.notes[name]}</span></div>`;
     document.getElementById('thresholdTable').innerHTML = `<div class="text-[0.7rem] uppercase tracking-wider text-slate-500">${s.gate ? 'With flap gate' : 'Pre-gate'} thresholds</div>`
         + RATED.map((n, k) => row(['Blue', 'Green', 'Yellow', 'Red', 'Purple'][k] + ' (' + LV_NAME[k + 1] + ')', n, LV_TEXTCLS[k + 1])).join('');
@@ -1089,10 +1106,11 @@ async function fetchRainForecast() {
     // Three requests in parallel (one try each, 45 s): HRRR+blend hourly, plain blend hourly, HRRR 15-min.
     // Open-Meteo sometimes takes 30-40 s or drops requests; running them side by side keeps the worst case near 45 s.
     const base = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&hourly=precipitation&precipitation_unit=inch&timezone=${TZ}&past_days=2&forecast_days=3`;
-    const [hr, plain, m15] = await Promise.allSettled([
+    const [hr, plain, m15, alt] = await Promise.allSettled([
         fetchJson(base + '&models=best_match,gfs_hrrr', 45000, 1),
         fetchJson(base, 45000, 1),
-        fetchJson(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&minutely_15=precipitation&precipitation_unit=inch&timezone=${TZ}&forecast_days=2&models=ncep_hrrr_conus`, 45000, 1)
+        fetchJson(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&minutely_15=precipitation&precipitation_unit=inch&timezone=${TZ}&forecast_days=2&models=ncep_hrrr_conus`, 45000, 1),
+        fetchJson(base + '&models=ncep_rrfs_conus,ncep_nbm_conus', 45000, 1)   // second opinions for the consensus rating
     ]);
     let out;
     if (hr.status === 'fulfilled') {
@@ -1117,6 +1135,16 @@ async function fetchRainForecast() {
             if (parts.every(v => v != null)) { out.precip[i] = +parts.reduce((a, b) => a + b, 0).toFixed(3); used++; }
         });
         if (used) out.source = 'HRRR 15-min for the next ' + used + ' h, then ' + out.source;
+    }
+    // RRFS + NBM, matched to the same hour labels
+    out.others = {};
+    if (alt.status === 'fulfilled' && alt.value.hourly) {
+        const at = alt.value.hourly.time || [], idx = {}; at.forEach((t, i) => { idx[t] = i; });
+        [['rrfs', 'precipitation_ncep_rrfs_conus'], ['nbm', 'precipitation_ncep_nbm_conus']].forEach(([k, col]) => {
+            const arr = alt.value.hourly[col]; if (!arr) return;
+            const vals = out.times.map(t => idx[t] != null ? (arr[idx[t]] ?? null) : null);
+            if (vals.some(v => v != null)) out.others[k] = vals;
+        });
     }
     storageSet('athlone_fc_cache', { at: Date.now(), out });
     return out;
@@ -1197,6 +1225,17 @@ async function loadLiveData(force = false) {
     } finally { if (my === loadSeq) btn.innerText = '🔄 Refresh Live Data'; }
 }
 
+function renderModelTable(runs, consPeak, cal, times, fromIdx, noFc) {
+    const el = document.getElementById('modelTable'); if (!el) return;
+    if (noFc) { el.innerHTML = ''; return; }
+    const chip = v => { const lv = levelFor(v, cal.thresh); return `<span style="color:${lv ? LV_COLOR[lv] : '#94a3b8'};font-weight:700">${lv ? LV_NAME[lv].toUpperCase() : 'none'}</span>`; };
+    const when = r => r.peak >= 0.05 && r.pk >= 0 ? hourLabel(new Date(times[fromIdx + r.pk].getTime() - 2 * 3600000)) : '';
+    const row = (name, note, v, w, bold) => `<div class="flex justify-between gap-2 ${bold ? 'border-t border-slate-700 pt-1 mt-1' : ''}"><span>${bold ? '<b class="text-white">' + name + '</b>' : name} <span class="text-slate-500">${note}</span></span><span class="text-right"><b class="text-white">${fmt(v)} in</b> ${chip(v)}<span class="text-slate-500">${w ? ' · ' + w : ''}</span></span></div>`;
+    el.innerHTML = '<div class="text-[0.7rem] uppercase tracking-wider text-slate-500">Hardest 3 h by model (bias-corrected)</div>'
+        + runs.map(r => row(r.name, '×' + r.factor.toFixed(2), r.peak, when(r))).join('')
+        + (consPeak != null ? row('Consensus', 'middle value', consPeak, '', true) : '');
+}
+
 function renderLive() {
     if (currentMode.type !== 'live' || !liveCache) return;
     const { pred, obs, ofs, rainData, hist, fetchedAt } = liveCache;
@@ -1247,7 +1286,8 @@ function renderLive() {
     });
     // For the rating, the current hour = rain so far + the forecast for the part of the hour still to come
     const rainForRating = rain.map((v, i) => times[i].getTime() === nowBin && partialNow ? +(soFar + (omBy[nowBin] ?? 0) * s.bias * (1 - elapsed)).toFixed(3) : v);
-    try { if (!rainData.stale && !rainData.noForecast) logForecastSlots(omBy, nowBin); logMeasuredSlots(multi, nowBin); } catch (e) { console.warn('bias learner', e); }
+    const otherBy = {}; Object.entries(rainData.others || {}).forEach(([k, vals]) => { const by = {}; rainData.times.forEach((t, i) => { by[parseLocal(t).getTime() - 3600000] = vals[i]; }); otherBy[k] = by; });
+    try { if (!rainData.stale && !rainData.noForecast) logForecastSlots(omBy, nowBin, { fR: otherBy.rrfs || {}, fN: otherBy.nbm || {} }); logMeasuredSlots(multi, nowBin); } catch (e) { console.warn('bias learner', e); }
     // Channel level. The gauge only reports when the level moves ~0.1 ft (plus check-ins at 5:13 and 17:13), and the archive
     // mostly gets just the check-ins, so the county feed's individual readings are used: hourly max of readings, and between
     // readings the level is carried forward (no report = no change). Archive fills older hours the feed doesn't cover.
@@ -1283,7 +1323,28 @@ function renderLive() {
 
     // Rating: hardest 3 h from now on (rolling windows ending ≥ now), plus the live channel level
     const fromIdx = 24;
-    const fr3 = r3.slice(fromIdx), pk = argmax(fr3), peakR3 = fr3[pk] ?? 0;
+    const fr3 = r3.slice(fromIdx), pkH = argmax(fr3), peakH = fr3[pkH] ?? 0;
+    // CONSENSUS: each model's hardest 3 h from now on (bias-corrected, with measured rain for past hours and the rain so far
+    // this hour), then the middle value. Comparing peaks (not hour-by-hour values) keeps a timing difference between models
+    // from averaging the burst away.
+    const runFor = (by, f) => times.map((t, i) => { const ms = t.getTime();
+        if (measured[i]) return rain[i];
+        if (ms === nowBin && partialNow) return by[nowBin] == null ? null : soFar + by[nowBin] * f * (1 - elapsed);
+        return by[ms] == null ? null : by[ms] * f; });
+    const runs = [{ key: 'hrrr', name: 'HRRR', factor: s.bias, peak: peakH, pk: pkH }];
+    [['rrfs', 'RRFS', 'fR'], ['nbm', 'NBM', 'fN']].forEach(([k, name, fk]) => {
+        const by = otherBy[k]; if (!by) return;
+        const ser = runFor(by, modelFactor(fk, s.bias)), futVals = ser.slice(fromIdx);
+        if (futVals.filter(v => v != null).length < 6) return;   // model not reporting
+        const rr = rolling(ser.map(v => v ?? 0), 3).slice(fromIdx), p = argmax(rr);
+        runs.push({ key: k, name, factor: modelFactor(fk, s.bias), peak: rr[p] ?? 0, pk: p });
+    });
+    const sorted = [...runs].sort((a, b) => a.peak - b.peak);
+    const mid = sorted.length === 2 ? null : sorted[(sorted.length - 1) >> 1];
+    const consPeak = sorted.length === 2 ? (sorted[0].peak + sorted[1].peak) / 2 : mid.peak;
+    const useCons = s.rating === 'consensus' && runs.length > 1 && !rainData.noForecast;
+    const peakR3 = useCons ? consPeak : peakH;
+    const pk = useCons ? (mid || sorted[1]).pk : pkH;
     const rainLv = levelFor(peakR3, cal.thresh);
     const chNow = gaugeFeed?.stageCal && minutesAgo(gaugeFeed.stageCal.time) < 6 * 60 ? gaugeFeed.stageCal.value : null;
     // Measured burst: a 1-hour total this high has gone with garage-level water (Feb 2025 0.43, Mar 2023 0.52, Dec 2025 0.59 in/h),
@@ -1295,11 +1356,13 @@ function renderLive() {
     // "If HRRR is low" scenario: forecast hours at 3x (the typical miss in the big-burst storms) instead of the bias factor
     const rainAlt = times.map((t, i) => measured[i] ? rain[i] : t.getTime() === nowBin && partialNow ? soFar + (omBy[nowBin] ?? 0) * BIG_MISS * (1 - elapsed) : (omBy[t.getTime()] ?? 0) * BIG_MISS);
     const altPeak = Math.max(0, ...rolling(rainAlt, 3).slice(fromIdx)), altLv = levelFor(altPeak, cal.thresh);
+    const ratedBy = useCons ? `Rated on the model consensus (middle of ${runs.map(r => r.name).join(', ')}).` : (s.rating === 'consensus' && runs.length < 2 && !rainData.noForecast ? 'RRFS/NBM unavailable: rated on HRRR alone.' : '');
     let extra = rainLv && pk >= 0 ? ` Hardest rain around ${hourLabel(new Date(times[fromIdx + pk].getTime() - 2 * 3600000))}–${hourLabel(new Date(times[fromIdx + pk].getTime() + 3600000)).slice(-5)}.` : '';
     if (chLv > rainLv) extra = ` Atherton Channel at Caltrain is at county ${['', 'Flood Monitoring', 'Flood Watch', 'FLOOD WARNING'][stageLevelOf(chNow)]} level (${chNow} ft) right now.`;
     if (burstLv > Math.max(rainLv, chLv)) extra = ` ${fmt(hr1)} in of rain measured in the last hour at Caltrain: a burst like the ones that brought water to the garage doors.`;
     if (altLv > lv && !rainData.noForecast) extra += ` If HRRR is low, as it was by about 3× in Mar 2023 and Dec 2025, the hardest 3 h would be ${fmt(altPeak)} in → ${LV_NAME[altLv].toUpperCase()}.`;
-    setBadge(lv, extra);
+    setBadge(lv, extra + (ratedBy ? ' ' + ratedBy : ''));
+    renderModelTable(runs, useCons ? consPeak : null, cal, times, fromIdx, rainData.noForecast);
     setFavicon(lv);
     if (rainData.noForecast) {   // never show a calm "NONE" when we simply can't see what's coming
         document.getElementById('riskLevel').innerText = (lv ? BADGES[lv][1] : 'NO FORECAST') + ' (measured only)';
@@ -1312,14 +1375,14 @@ function renderLive() {
     const fut = rain.slice(fromIdx), maxT = Math.max(...tide.slice(fromIdx).filter(v => v != null));
     document.getElementById('riskTitle').innerText = 'Peak Risk Rating (now → +72 h)';
     document.getElementById('chartTitle').innerText = 'Past 24 h + 72-Hour Forecast';
-    document.getElementById('statR3').innerText = `${fmt(peakR3)} in forecast · ${fmt(Math.max(0, ...r3.slice(0, fromIdx)))} in past 24 h`;
+    document.getElementById('statR3').innerText = `${fmt(peakR3)} in forecast${useCons ? ' (consensus)' : ''} · ${fmt(Math.max(0, ...r3.slice(0, fromIdx)))} in past 24 h`;
     document.getElementById('statR1').innerText = `${fmt(Math.max(0, ...fut))} in forecast`;
     document.getElementById('statR24').innerText = `${fmt(past24)} in measured · ${fmt(fut.slice(0, 24).reduce((a, b) => a + b, 0))} in next 24 h`;
     document.getElementById('statStage').innerText = chNow != null ? stageText(chNow) + ' now' : (gaugeFeed ? 'no recent report' : '--');
     document.getElementById('statTide').innerText = isFinite(maxT) ? `${maxT.toFixed(1)} ft MLLW (${(maxT - NAVD_OFFSET).toFixed(1)} NAVD88)` : '--';
     document.getElementById('statSurge').innerText = (lastObsIdx >= 0 ? `now ${surgeNow >= 0 ? '+' : ''}${surgeNow.toFixed(2)} ft` : 'no obs') + (maxFcSurge != null ? ` · fcst max +${maxFcSurge.toFixed(1)}` : '');
     setChartKey([
-        KEY.item(KEY.bar(FC_BAR), `Rain forecast (HRRR × ${s.bias.toFixed(2)}; for past hours, the forecast made just before)`),
+        KEY.item(KEY.bar(FC_BAR), `Rain forecast (HRRR × ${s.bias.toFixed(2)}; for past hours, the forecast made just before). The rating also checks RRFS and NBM (see the risk card).`),
         haveGauge || partialNow ? KEY.item(KEY.bar(MEAS_BAR), `Rain measured, drawn over the forecast; a blue outline shows the forecast where rain beat it (${livePick?.source || 'Caltrain gauge'}; current hour updates every few minutes)`) : '',
         KEY.item(KEY.line('#f59e0b'), 'Rolling 3-hour rain (what the rating uses)'),
         KEY.item(KEY.line('#c084fc'), 'Channel level @ Caltrain (dot = latest reading; dashed after it = no new report, level assumed unchanged), with county lines:'),
@@ -1332,6 +1395,7 @@ function renderLive() {
     if (rainData.noForecast) caveats.push('The rain forecast (Open-Meteo) is not responding, so this rating uses only rain already measured and the channel level. It cannot see rain that is still coming. Try Refresh in a few minutes.');
     else if (rainData.stale) caveats.push('Open-Meteo is not responding; the rain forecast shown is the last one saved (' + rainData.source.replace(/^saved forecast from /, '').replace(/ \(.*$/, '') + ').');
     if (s.gate && cal.unobserved.length) caveats.push(`No ${cal.unobserved.map(n => LV_NAME[LEVELS.indexOf(n)]).join(' or ')} flood has been documented since the flap gate went in, so those thresholds are lower bounds.`);
+    if (runs.length > 1 && levelFor(sorted[sorted.length - 1].peak, cal.thresh) - levelFor(sorted[0].peak, cal.thresh) >= 2) caveats.push(`The models disagree by two or more levels (${sorted[0].name} ${fmt(sorted[0].peak)} in vs ${sorted[sorted.length - 1].name} ${fmt(sorted[sorted.length - 1].peak)} in for the hardest 3 h).`);
     if (peakR3 >= cal.thresh.garage * 0.6) caveats.push('Forecast rain bursts here have been off by 2–3× on individual storms. Watch the measured rain and channel tiles as the storm arrives.');
     if (hist?.error) caveats.push('Gauge archive unavailable (' + hist.error + '); past rain bars show the forecast model instead.');
     if (livePick?.source) caveats.push(`The Caltrain rain sensor is reading far below nearby gauges (${livePick.primary.toFixed(2)} vs ${livePick.backup.toFixed(2)} in over 24 h), so past rain uses the ${livePick.source}. The sensor may be clogged.`);
