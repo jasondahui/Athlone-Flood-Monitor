@@ -218,6 +218,7 @@
         </div>
         <details class="text-xs text-slate-500"><summary class="cursor-pointer text-slate-400">Version <span id="appVersion"></span>: change history</summary>
             <ul class="list-disc pl-5 mt-1 space-y-0.5">
+                <li><b>2.35</b> (Nov 17, 2026): the chart's 3-hour line and level strip follow the model consensus (matching the rating), with a shaded band for the lowest-to-highest model.</li>
                 <li><b>2.34</b> (Nov 17, 2026): rating uses the model consensus (middle of HRRR, RRFS and NBM hardest 3 h) instead of HRRR alone; per-model table on the risk card; RRFS/NBM forecasts logged for bias learning. Setting to switch back to HRRR only.</li>
                 <li><b>2.33</b> (Nov 17, 2026): color-coded summary box at the top of the Storm discussion (flood risk, forecast changes, models, timing, tide, actions); action items written for the whole street.</li>
                 <li><b>2.31</b> (Nov 17, 2026): public copy on GitHub; the Storm discussion updates automatically from an hourly data snapshot.</li>
@@ -267,7 +268,7 @@ const TZ = 'America%2FLos_Angeles';
 const GATE_DATE = '2024-11-01';          // county flap gate installed Nov 2024
 const NAVD_OFFSET = 1.18;                // NOAA 9414523: NAVD88 = MLLW − 1.18 ft
 const STREET_NAVD = 21;                  // USGS 3DEP ground elevation on Athlone Way
-const VERSION = '2.34 (Nov 17, 2026)';
+const VERSION = '2.35 (Nov 17, 2026)';
 // Text size: the page is rem-based, so one root percentage scales everything; the chart and map follow it
 const uiScale = () => (storageGet('athlone_textsize', 115)) / 100;
 function applyTextSize() {
@@ -733,10 +734,10 @@ function riskKey() {
 function setChartKey(itemsHtml, noteText = '') {
     document.getElementById('chartNote').innerHTML = `<div>${itemsHtml}</div>${noteText ? `<div class="mt-1">${escapeHtml(noteText)}</div>` : ''}`;
 }
-function drawChart({ times, tide, rain, r3, stage, level, isLive, forecastFromIdx = Infinity, rainColors, withDate, ghost = null, ghostColors = null, stageDotIdx = null }) {
+function drawChart({ times, tide, rain, r3, band = null, r3Label = null, stage, level, isLive, forecastFromIdx = Infinity, rainColors, withDate, ghost = null, ghostColors = null, stageDotIdx = null }) {
     if (forecastChart) forecastChart.destroy();
     view = { times, level, isLive };
-    const rMax = Math.max(1.0, ...rain.map(v => v || 0), ...(ghost || []).map(v => v || 0), ...r3) * 1.1;
+    const rMax = Math.max(1.0, ...rain.map(v => v || 0), ...(ghost || []).map(v => v || 0), ...r3, ...(band ? band.hi.map(v => v || 0) : [])) * 1.1;
     const tv = tide.filter(v => v != null), sv = stage.filter(v => v != null);
     Chart.defaults.font.size = Math.round(12 * uiScale());
     forecastChart = new Chart(ctx, {
@@ -749,7 +750,11 @@ function drawChart({ times, tide, rain, r3, stage, level, isLive, forecastFromId
                 { type: 'line', label: 'Channel level @ Caltrain (ft)', data: stage, borderColor: '#c084fc', backgroundColor: 'rgba(192,132,252,0.12)', fill: true, borderWidth: 2,
                   pointRadius: stageDotIdx != null ? stage.map((_, i) => i === stageDotIdx ? 4 : 0) : 0, pointBackgroundColor: '#c084fc', tension: 0.2, spanGaps: true, yAxisID: 'yStage', order: 0,
                   segment: stageDotIdx != null ? { borderDash: c => c.p0DataIndex >= stageDotIdx ? [4, 4] : undefined } : undefined },   // dot = hour of the latest reading; dashed after it = no new report (level assumed unchanged)
-                { type: 'line', label: 'Rolling 3-h rain (in)', data: r3, borderColor: '#f59e0b', borderWidth: 2, pointRadius: 0, tension: 0.2, yAxisID: 'yRain', order: 2 },
+                { type: 'line', label: r3Label || 'Rolling 3-h rain (in)', data: r3, borderColor: '#f59e0b', borderWidth: 2, pointRadius: 0, tension: 0.2, yAxisID: 'yRain', order: 2 },
+                ...(band ? [
+                    { type: 'line', label: 'Model range low', data: band.lo, borderWidth: 0, pointRadius: 0, tension: 0.2, yAxisID: 'yRain', order: 2, fill: false },
+                    { type: 'line', label: 'Model range (lowest–highest)', data: band.hi, borderWidth: 0, pointRadius: 0, tension: 0.2, yAxisID: 'yRain', order: 2,
+                      backgroundColor: 'rgba(245,158,11,0.16)', fill: '-1' }] : []),
                 { type: 'bar', label: ghost ? 'Rain measured (in)' : 'Hourly rain (in)', data: rain, backgroundColor: rainColors || 'rgba(45, 212, 191, 0.85)', borderWidth: 0, yAxisID: 'yRain', order: 3, grouped: false },
                 ...(ghost ? [{ type: 'bar', label: 'Rain forecast (in)', data: ghost, backgroundColor: ghostColors, borderWidth: 0, yAxisID: 'yRain', order: 4, grouped: false }] : [])
             ]
@@ -764,7 +769,7 @@ function drawChart({ times, tide, rain, r3, stage, level, isLive, forecastFromId
                 yStage: { type: 'linear', position: 'right', min: 0, max: Math.max(7, Math.ceil(Math.max(0, ...sv) + 0.5)), title: { display: true, text: 'Channel level (ft)', color: '#c084fc' }, ticks: { color: '#c084fc' }, grid: { drawOnChartArea: false } }
             },
             plugins: {
-                legend: { labels: { color: '#f8fafc' } },
+                legend: { labels: { color: '#f8fafc', filter: it => it.text !== 'Model range low' } },
                 tooltip: { callbacks: { afterBody: items => { const lv = level[items[0].dataIndex]; return lv ? `Rain risk: ${BADGES[lv][1]}` : ''; } } }
             }
         },
@@ -1305,7 +1310,37 @@ function renderLive() {
     });
     const lastPt = pts.length ? pts[pts.length - 1][0] : null;
     const stageDotIdx = lastPt != null ? times.findIndex(t => lastPt >= t.getTime() && lastPt < t.getTime() + 3600000) : null;
-    const r3 = rolling(rainForRating, 3), level = r3.map(v => levelFor(v, cal.thresh));
+    const r3H = rolling(rainForRating, 3), fromIdx = 24;
+    // CONSENSUS: each model's hardest 3 h from now on (bias-corrected, with measured rain for past hours and the rain so far
+    // this hour), then the middle value. Comparing peaks (not hour-by-hour values) keeps a timing difference between models
+    // from averaging the burst away. The chart's orange line and level strip follow the middle model's run, so the graph
+    // matches the rating; the shaded band shows the lowest to highest model.
+    const runFor = (by, f) => times.map((t, i) => { const ms = t.getTime();
+        if (measured[i]) return rain[i];
+        if (ms === nowBin && partialNow) return by[nowBin] == null ? null : soFar + by[nowBin] * f * (1 - elapsed);
+        return by[ms] == null ? null : by[ms] * f; });
+    const runs = [{ key: 'hrrr', name: 'HRRR', factor: s.bias, rr: r3H }];
+    [['rrfs', 'RRFS', 'fR'], ['nbm', 'NBM', 'fN']].forEach(([k, name, fk]) => {
+        const by = otherBy[k]; if (!by) return;
+        const ser = runFor(by, modelFactor(fk, s.bias));
+        if (ser.slice(fromIdx).filter(v => v != null).length < 6) return;   // model not reporting
+        runs.push({ key: k, name, factor: modelFactor(fk, s.bias), rr: rolling(ser.map(v => v ?? 0), 3) });
+    });
+    runs.forEach(r => { const fut = r.rr.slice(fromIdx); r.pk = argmax(fut); r.peak = fut[r.pk] ?? 0; });
+    const sorted = [...runs].sort((a, b) => a.peak - b.peak);
+    const useCons = s.rating === 'consensus' && runs.length > 1 && !rainData.noForecast;
+    let consPeak = null, consPk = -1, r3 = r3H, midName = '';
+    if (runs.length === 2) {   // two models: average them
+        r3 = r3H.map((v, i) => i < fromIdx ? v : +((sorted[0].rr[i] + sorted[1].rr[i]) / 2).toFixed(3));
+        consPk = argmax(r3.slice(fromIdx)); consPeak = r3[fromIdx + consPk] ?? 0; midName = 'average of ' + runs.map(r => r.name).join(' and ');
+    } else if (runs.length > 2) {
+        const mid = sorted[(sorted.length - 1) >> 1]; consPeak = mid.peak; consPk = mid.pk; midName = 'the middle model, ' + mid.name + ' this run';
+        r3 = r3H.map((v, i) => i < fromIdx ? v : mid.rr[i]);
+    }
+    if (!useCons) r3 = r3H;
+    const band = useCons ? { lo: times.map((_, i) => i < fromIdx - 1 ? null : Math.min(...runs.map(r => r.rr[i] ?? 0))),
+                             hi: times.map((_, i) => i < fromIdx - 1 ? null : Math.max(...runs.map(r => r.rr[i] ?? 0))) } : null;
+    const level = r3.map(v => levelFor(v, cal.thresh));
 
     // Forecast drawn as an outlined bar; measured rain fills it from the bottom (and can overflow it). Past hours keep the
     // forecast that was made just before they started (saved in the forecast log), so you can see how the forecast did.
@@ -1317,34 +1352,14 @@ function renderLive() {
     });
     const isNow = i => times[i].getTime() === nowBin;
     const barsMeasured = rain.map((v, i) => measured[i] || (isNow(i) && partialNow) ? v : null);
-    drawChart({ times, tide, rain: barsMeasured, r3, stage, level, isLive: true, forecastFromIdx: lastObsIdx, stageDotIdx: stageDotIdx >= 0 ? stageDotIdx : null,
+    drawChart({ times, tide, rain: barsMeasured, r3, band, r3Label: useCons ? 'Rolling 3-h rain, model consensus (in)' : null, stage, level, isLive: true, forecastFromIdx: lastObsIdx, stageDotIdx: stageDotIdx >= 0 ? stageDotIdx : null,
         rainColors: MEAS_BAR,
         ghost, ghostColors: FC_BAR });
 
     // Rating: hardest 3 h from now on (rolling windows ending ≥ now), plus the live channel level
-    const fromIdx = 24;
-    const fr3 = r3.slice(fromIdx), pkH = argmax(fr3), peakH = fr3[pkH] ?? 0;
-    // CONSENSUS: each model's hardest 3 h from now on (bias-corrected, with measured rain for past hours and the rain so far
-    // this hour), then the middle value. Comparing peaks (not hour-by-hour values) keeps a timing difference between models
-    // from averaging the burst away.
-    const runFor = (by, f) => times.map((t, i) => { const ms = t.getTime();
-        if (measured[i]) return rain[i];
-        if (ms === nowBin && partialNow) return by[nowBin] == null ? null : soFar + by[nowBin] * f * (1 - elapsed);
-        return by[ms] == null ? null : by[ms] * f; });
-    const runs = [{ key: 'hrrr', name: 'HRRR', factor: s.bias, peak: peakH, pk: pkH }];
-    [['rrfs', 'RRFS', 'fR'], ['nbm', 'NBM', 'fN']].forEach(([k, name, fk]) => {
-        const by = otherBy[k]; if (!by) return;
-        const ser = runFor(by, modelFactor(fk, s.bias)), futVals = ser.slice(fromIdx);
-        if (futVals.filter(v => v != null).length < 6) return;   // model not reporting
-        const rr = rolling(ser.map(v => v ?? 0), 3).slice(fromIdx), p = argmax(rr);
-        runs.push({ key: k, name, factor: modelFactor(fk, s.bias), peak: rr[p] ?? 0, pk: p });
-    });
-    const sorted = [...runs].sort((a, b) => a.peak - b.peak);
-    const mid = sorted.length === 2 ? null : sorted[(sorted.length - 1) >> 1];
-    const consPeak = sorted.length === 2 ? (sorted[0].peak + sorted[1].peak) / 2 : mid.peak;
-    const useCons = s.rating === 'consensus' && runs.length > 1 && !rainData.noForecast;
+    const fr3 = r3H.slice(fromIdx), pkH = argmax(fr3), peakH = fr3[pkH] ?? 0;
     const peakR3 = useCons ? consPeak : peakH;
-    const pk = useCons ? (mid || sorted[1]).pk : pkH;
+    const pk = useCons ? consPk : pkH;
     const rainLv = levelFor(peakR3, cal.thresh);
     const chNow = gaugeFeed?.stageCal && minutesAgo(gaugeFeed.stageCal.time) < 6 * 60 ? gaugeFeed.stageCal.value : null;
     // Measured burst: a 1-hour total this high has gone with garage-level water (Feb 2025 0.43, Mar 2023 0.52, Dec 2025 0.59 in/h),
@@ -1384,7 +1399,8 @@ function renderLive() {
     setChartKey([
         KEY.item(KEY.bar(FC_BAR), `Rain forecast (HRRR × ${s.bias.toFixed(2)}; for past hours, the forecast made just before). The rating also checks RRFS and NBM (see the risk card).`),
         haveGauge || partialNow ? KEY.item(KEY.bar(MEAS_BAR), `Rain measured, drawn over the forecast; a blue outline shows the forecast where rain beat it (${livePick?.source || 'Caltrain gauge'}; current hour updates every few minutes)`) : '',
-        KEY.item(KEY.line('#f59e0b'), 'Rolling 3-hour rain (what the rating uses)'),
+        KEY.item(KEY.line('#f59e0b'), useCons ? `Rolling 3-hour rain, model consensus (what the rating uses: ${midName})` : 'Rolling 3-hour rain, HRRR (what the rating uses)'),
+        useCons ? KEY.item(KEY.band('rgba(245,158,11,0.3)'), 'Range from the lowest to the highest model') : '',
         KEY.item(KEY.line('#c084fc'), 'Channel level @ Caltrain (dot = latest reading; dashed after it = no new report, level assumed unchanged), with county lines:'),
         KEY.item(KEY.line('#facc15', true), 'Monitoring'), KEY.item(KEY.line('#f97316', true), 'Watch'), KEY.item(KEY.line('#ef4444', true), 'Warning'),
         KEY.item(KEY.line('#38bdf8'), 'Bay tide, measured'), KEY.item(KEY.line('#38bdf8', true), ofsCount ? 'Bay tide forecast (NOAA SF Bay model, includes surge)' : 'Bay tide forecast (prediction + current surge)'),
