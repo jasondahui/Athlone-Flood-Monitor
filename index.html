@@ -13,7 +13,7 @@
         .tbl td, .tbl th { padding: 6px 8px; white-space: nowrap; }
       mark.disc-hl { background: rgba(251,191,36,.18); color: #fde68a; font-weight: 600; padding: 0 .2em; border-radius: 3px; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
 </style>
-<style>#discussionBox summary{list-style:none;display:flex;align-items:center;gap:.5rem;min-width:0} #discussionBox summary::-webkit-details-marker{display:none} #discussionBox summary > span{flex-shrink:0;white-space:nowrap} #discussionBox summary > #discHeadline{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap} #discMeta{flex-shrink:0;margin-left:auto} #discussionBox[open] #discSummary{margin-top:.6rem} #discussionBox .disc-chev{transition:transform .15s} #discussionBox[open] .disc-chev{transform:rotate(90deg)} #discussionBox[open] summary > #discHeadline{white-space:normal}</style>
+<style>.clip-card{position:relative} .clip-card.clipped{overflow:hidden} .clip-card.clipped::after{content:"";position:absolute;left:0;right:0;bottom:0;height:3.5rem;background:linear-gradient(to bottom,rgba(30,41,59,0),#1e293b);pointer-events:none;border-radius:0 0 1rem 1rem} #discussionBox summary{list-style:none;display:flex;align-items:center;gap:.5rem;min-width:0} #discussionBox summary::-webkit-details-marker{display:none} #discussionBox summary > span{flex-shrink:0;white-space:nowrap} #discussionBox summary > #discHeadline{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap} #discMeta{flex-shrink:0;margin-left:auto} #discussionBox[open] #discSummary{margin-top:.6rem} #discussionBox .disc-chev{transition:transform .15s} #discussionBox[open] .disc-chev{transform:rotate(90deg)} #discussionBox[open] summary > #discHeadline{white-space:normal}</style>
 </head>
 <body class="p-4 md:p-8">
 <div class="max-w-7xl mx-auto space-y-6">
@@ -68,9 +68,9 @@
         <p id="chartNote" class="text-xs text-slate-500"></p>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div id="riskLibRow" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- Risk card -->
-        <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl space-y-4">
+        <div id="riskCardEl" class="clip-card bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl space-y-4">
             <h3 id="riskTitle" class="text-md font-semibold text-slate-300">Peak Risk Rating</h3>
             <div id="riskBadge" class="p-4 rounded-xl border bg-slate-900 border-slate-600 text-slate-300 text-center">
                 <div id="riskLevel" class="text-2xl font-bold uppercase tracking-wider">--</div>
@@ -105,7 +105,7 @@
         </div>
 
         <!-- Storm library -->
-        <div class="lg:col-span-2 bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl space-y-4">
+        <div id="libCardEl" class="clip-card lg:col-span-2 bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl space-y-4">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <h3 class="text-md font-semibold text-slate-300">Storm Library: replay any storm, label what the street did</h3>
                 <span id="libStatus" class="text-xs text-slate-500"></span>
@@ -130,6 +130,18 @@
             </form>
         </div>
     </div>
+    <button id="riskLibToggle" type="button" onclick="toggleRiskLib()" class="w-full -mt-3 py-2 rounded-xl border border-slate-700 bg-slate-800/70 hover:bg-slate-700 text-sm text-sky-300 font-medium">▾ Show everything: model settings and the full storm library</button>
+
+    <!-- Satellite (Windy embed) -->
+    <section class="bg-slate-800 p-4 sm:p-6 rounded-2xl border border-slate-700 shadow-xl space-y-3">
+        <div class="flex flex-wrap items-baseline justify-between gap-2">
+            <h3 class="text-md font-semibold text-slate-300">Satellite</h3>
+            <a href="https://www.windy.com/-Satellite-satellite?satellite,37.477,-122.192,7" target="_blank" rel="noopener" class="text-xs text-sky-300 underline">Open in Windy ↗</a>
+        </div>
+        <iframe id="windyFrame" title="Windy satellite view" loading="lazy" class="w-full rounded-xl border border-slate-700" style="height:460px"
+            src="https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=in&metricTemp=%C2%B0F&metricWind=mph&zoom=7&overlay=satellite&product=satellite&level=surface&lat=37.25&lon=-122.6&detailLat=37.477&detailLon=-122.192&marker=true" frameborder="0"></iframe>
+        <p class="text-[0.7rem] text-slate-500">Satellite imagery by <a class="underline" href="https://www.windy.com" target="_blank" rel="noopener">Windy.com</a>. Use the timeline to loop recent images; incoming fronts show up as a band of bright cloud approaching from the west or northwest.</p>
+    </section>
 
     <!-- Drainage map -->
     <section class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl space-y-3">
@@ -220,6 +232,7 @@
         </div>
         <details class="text-xs text-slate-500"><summary class="cursor-pointer text-slate-400">Version <span id="appVersion"></span>: change history</summary>
             <ul class="list-disc pl-5 mt-1 space-y-0.5">
+                <li><b>2.37</b> (Nov 18, 2026): risk card and storm library collapse together, cut off just below the model consensus line; Windy satellite view added below them.</li>
                 <li><b>2.36</b> (Nov 17, 2026): Storm discussion collapses to a one-line bar like the NWS alerts; tap to open the summary and full text.</li>
                 <li><b>2.35</b> (Nov 17, 2026): the chart's 3-hour line and level strip follow the model consensus (matching the rating), with a shaded band for the lowest-to-highest model.</li>
                 <li><b>2.34</b> (Nov 17, 2026): rating uses the model consensus (middle of HRRR, RRFS and NBM hardest 3 h) instead of HRRR alone; per-model table on the risk card; RRFS/NBM forecasts logged for bias learning. Setting to switch back to HRRR only.</li>
@@ -271,7 +284,7 @@ const TZ = 'America%2FLos_Angeles';
 const GATE_DATE = '2024-11-01';          // county flap gate installed Nov 2024
 const NAVD_OFFSET = 1.18;                // NOAA 9414523: NAVD88 = MLLW − 1.18 ft
 const STREET_NAVD = 21;                  // USGS 3DEP ground elevation on Athlone Way
-const VERSION = '2.36 (Nov 17, 2026)';
+const VERSION = '2.37 (Nov 18, 2026)';
 // Text size: the page is rem-based, so one root percentage scales everything; the chart and map follow it
 const uiScale = () => (storageGet('athlone_textsize', 115)) / 100;
 function applyTextSize() {
@@ -1516,6 +1529,35 @@ applyTextSize();
     window.addEventListener('resize', () => setTimeout(fit, 200));
     f.srcdoc = MAP_HTML;
 })();
+
+
+// =================================================================
+// COLLAPSE: risk card + storm library share one cut-off line, just below the model consensus row
+// =================================================================
+let riskLibOpen = !!storageGet('athlone_risklib_open', false);
+function applyRiskLibCollapse() {
+    const rc = document.getElementById('riskCardEl'), lc = document.getElementById('libCardEl'), btn = document.getElementById('riskLibToggle');
+    if (!rc || !lc || !btn) return;
+    [rc, lc].forEach(el => { el.style.maxHeight = ''; el.classList.remove('clipped'); });
+    if (riskLibOpen) { btn.textContent = '▴ Collapse the risk details and storm library'; return; }
+    btn.textContent = '▾ Show everything: model settings and the full storm library';
+    const mt = document.getElementById('modelTable'), top = rc.getBoundingClientRect().top;
+    // anchor: bottom of the model table (consensus row); in replays it is empty, so use the rain/channel stats instead
+    let anchor = mt && mt.offsetHeight > 0 ? mt : document.getElementById('statSurge')?.parentElement?.parentElement;
+    if (!anchor) return;
+    const h = Math.ceil(anchor.getBoundingClientRect().bottom - top + 20);
+    if (h < 120) return;
+    [rc, lc].forEach(el => { if (el.scrollHeight > h + 8) { el.style.maxHeight = h + 'px'; el.classList.add('clipped'); } });
+}
+function toggleRiskLib() {
+    riskLibOpen = !riskLibOpen; storageSet('athlone_risklib_open', riskLibOpen); applyRiskLibCollapse();
+    if (!riskLibOpen) document.getElementById('riskLibRow')?.scrollIntoView({ block: 'nearest' });
+}
+window.addEventListener('resize', () => { clearTimeout(window._rlT); window._rlT = setTimeout(applyRiskLibCollapse, 150); });
+// re-measure whenever the risk card's contents change (live refresh, replay, text size)
+(() => { const rc = document.getElementById('riskCardEl'); if (rc && 'MutationObserver' in window)
+    new MutationObserver(() => { clearTimeout(window._rlM); window._rlM = setTimeout(applyRiskLibCollapse, 50); }).observe(rc, { childList: true, subtree: true, characterData: true }); })();
+setTimeout(applyRiskLibCollapse, 0);
 
 </script>
 </body>
