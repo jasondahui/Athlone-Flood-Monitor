@@ -73,6 +73,7 @@
                 <button type="button" data-m="nbm" onclick="setRatingMode('nbm')" style="padding:.3rem .7rem;border-left:1px solid #475569">NBM</button>
             </div>
         </div>
+        <div class="flex flex-wrap items-center gap-2 text-xs"><span class="text-slate-400">Show on graph:</span><div id="chartToggles" class="flex flex-wrap gap-2"></div></div>
         <div class="relative w-full h-[460px]"><canvas id="forecastChart"></canvas></div>
         <p id="chartNote" class="text-xs text-slate-500"></p>
     </div>
@@ -246,6 +247,7 @@
         </div>
         <details class="text-xs text-slate-500"><summary class="cursor-pointer text-slate-400">Version <span id="appVersion"></span>: change history</summary>
             <ul class="list-disc pl-5 mt-1 space-y-0.5">
+                <li><b>2.41</b> (Nov 18, 2026): the graph's show/hide controls are now buttons above the graph (crossed out when hidden; remembered in this browser).</li>
                 <li><b>2.40</b> (Nov 18, 2026): forecast-model buttons on the graph (Consensus, HRRR, RRFS, NBM), linked to the "Rate on" setting; RRFS-only and NBM-only options added.</li>
                 <li><b>2.39</b> (Nov 18, 2026): radar is the default Windy view.</li>
                 <li><b>2.38</b> (Nov 18, 2026): Satellite / Radar toggle on the Windy view.</li>
@@ -301,7 +303,7 @@ const TZ = 'America%2FLos_Angeles';
 const GATE_DATE = '2024-11-01';          // county flap gate installed Nov 2024
 const NAVD_OFFSET = 1.18;                // NOAA 9414523: NAVD88 = MLLW − 1.18 ft
 const STREET_NAVD = 21;                  // USGS 3DEP ground elevation on Athlone Way
-const VERSION = '2.40 (Nov 18, 2026)';
+const VERSION = '2.41 (Nov 18, 2026)';
 // Text size: the page is rem-based, so one root percentage scales everything; the chart and map follow it
 const uiScale = () => (storageGet('athlone_textsize', 115)) / 100;
 function applyTextSize() {
@@ -398,6 +400,8 @@ async function fetchJson(url, timeoutMs = 25000, tries = 2) {
 const errText = e => e?.name === 'AbortError' ? 'timed out' : (e?.message || String(e));
 function storageGet(key, fallback) { try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; } catch (e) { return fallback; } }
 function storageSet(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); return true; } catch (e) { return false; } }
+// graph series the person has hidden with the buttons above the graph (by dataset key)
+const chartHidden = new Set(storageGet('athlone_chart_hidden', []));
 
 // Sunrise/sunset (NOAA sunrise equation, ±2 min)
 const sunCache = {};
@@ -793,18 +797,18 @@ function drawChart({ times, tide, rain, r3, band = null, r3Label = null, stage, 
         data: {
             labels: times.map(t => hourLabel(t, withDate)),
             datasets: [
-                { type: 'line', label: 'Bay tide (ft MLLW)', data: tide, borderColor: '#38bdf8', borderWidth: 2, pointRadius: 0, tension: 0.3, spanGaps: true,
+                { k: 'tide', type: 'line', label: 'Bay tide (ft MLLW)', data: tide, borderColor: '#38bdf8', borderWidth: 2, pointRadius: 0, tension: 0.3, spanGaps: true,
                   segment: { borderDash: c => c.p1DataIndex > forecastFromIdx ? [6, 4] : undefined }, yAxisID: 'yTide', order: 1 },
-                { type: 'line', label: 'Channel level @ Caltrain (ft)', data: stage, borderColor: '#c084fc', backgroundColor: 'rgba(192,132,252,0.12)', fill: true, borderWidth: 2,
+                { k: 'stage', type: 'line', label: 'Channel level @ Caltrain (ft)', data: stage, borderColor: '#c084fc', backgroundColor: 'rgba(192,132,252,0.12)', fill: true, borderWidth: 2,
                   pointRadius: stageDotIdx != null ? stage.map((_, i) => i === stageDotIdx ? 4 : 0) : 0, pointBackgroundColor: '#c084fc', tension: 0.2, spanGaps: true, yAxisID: 'yStage', order: 0,
                   segment: stageDotIdx != null ? { borderDash: c => c.p0DataIndex >= stageDotIdx ? [4, 4] : undefined } : undefined },   // dot = hour of the latest reading; dashed after it = no new report (level assumed unchanged)
-                { type: 'line', label: r3Label || 'Rolling 3-h rain (in)', data: r3, borderColor: '#f59e0b', borderWidth: 2, pointRadius: 0, tension: 0.2, yAxisID: 'yRain', order: 2 },
+                { k: 'r3', type: 'line', label: r3Label || 'Rolling 3-h rain (in)', data: r3, borderColor: '#f59e0b', borderWidth: 2, pointRadius: 0, tension: 0.2, yAxisID: 'yRain', order: 2 },
                 ...(band ? [
-                    { type: 'line', label: 'Model range low', data: band.lo, borderWidth: 0, pointRadius: 0, tension: 0.2, yAxisID: 'yRain', order: 2, fill: false },
-                    { type: 'line', label: 'Model range (lowest–highest)', data: band.hi, borderWidth: 0, pointRadius: 0, tension: 0.2, yAxisID: 'yRain', order: 2,
+                    { k: 'band', type: 'line', label: 'Model range low', data: band.lo, borderWidth: 0, pointRadius: 0, tension: 0.2, yAxisID: 'yRain', order: 2, fill: false },
+                    { k: 'band', type: 'line', label: 'Model range (lowest–highest)', data: band.hi, borderWidth: 0, pointRadius: 0, tension: 0.2, yAxisID: 'yRain', order: 2,
                       backgroundColor: 'rgba(245,158,11,0.16)', fill: '-1' }] : []),
-                { type: 'bar', label: ghost ? 'Rain measured (in)' : 'Hourly rain (in)', data: rain, backgroundColor: rainColors || 'rgba(45, 212, 191, 0.85)', borderWidth: 0, yAxisID: 'yRain', order: 3, grouped: false },
-                ...(ghost ? [{ type: 'bar', label: 'Rain forecast (in)', data: ghost, backgroundColor: ghostColors, borderWidth: 0, yAxisID: 'yRain', order: 4, grouped: false }] : [])
+                { k: 'meas', type: 'bar', label: ghost ? 'Rain measured (in)' : 'Hourly rain (in)', data: rain, backgroundColor: rainColors || 'rgba(45, 212, 191, 0.85)', borderWidth: 0, yAxisID: 'yRain', order: 3, grouped: false },
+                ...(ghost ? [{ k: 'fc', type: 'bar', label: 'Rain forecast (in)', data: ghost, backgroundColor: ghostColors, borderWidth: 0, yAxisID: 'yRain', order: 4, grouped: false }] : [])
             ]
         },
         options: {
@@ -817,12 +821,44 @@ function drawChart({ times, tide, rain, r3, band = null, r3Label = null, stage, 
                 yStage: { type: 'linear', position: 'right', min: 0, max: Math.max(7, Math.ceil(Math.max(0, ...sv) + 0.5)), title: { display: true, text: 'Channel level (ft)', color: '#c084fc' }, ticks: { color: '#c084fc' }, grid: { drawOnChartArea: false } }
             },
             plugins: {
-                legend: { labels: { color: '#f8fafc', filter: it => it.text !== 'Model range low' } },
+                legend: { display: false },   // replaced by the button row (#chartToggles)
                 tooltip: { callbacks: { afterBody: items => { const lv = level[items[0].dataIndex]; return lv ? `Rain risk: ${BADGES[lv][1]}` : ''; } } }
             }
         },
         plugins: [daylightPlugin, riskStripPlugin, channelLinesPlugin, fcTickPlugin, nowLinePlugin]
     });
+    forecastChart.data.datasets.forEach(d => { if (chartHidden.has(d.k)) d.hidden = true; });
+    forecastChart.update();
+    renderChartToggles();
+}
+
+// Show/hide buttons for the graph's data series (replaces Chart.js's legend, which looked like a key).
+// Hidden series stay hidden across refreshes and replays; remembered in this browser.
+function renderChartToggles() {
+    const box = document.getElementById('chartToggles'); if (!box || !forecastChart) return;
+    const seen = new Set(), items = [];
+    forecastChart.data.datasets.forEach(d => {
+        if (!d.k || seen.has(d.k) || d.label === 'Model range low') return; seen.add(d.k);
+        const col = d.k === 'band' ? 'rgba(245,158,11,0.55)' : (typeof d.backgroundColor === 'string' && d.type === 'bar') ? d.backgroundColor : d.borderColor || '#94a3b8';
+        items.push({ k: d.k, label: d.label.replace(/ \((in|ft|ft MLLW)\)$/, ''), col: typeof col === 'string' ? col : '#94a3b8', bar: d.type === 'bar' || d.k === 'band' });
+    });
+    box.innerHTML = items.map(it => {
+        const on = !chartHidden.has(it.k);
+        const sw = it.bar ? `<span style="width:.8rem;height:.8rem;border-radius:.2rem;background:${it.col};display:inline-block"></span>`
+                          : `<span style="width:1rem;height:.2rem;border-radius:1px;background:${it.col};display:inline-block"></span>`;
+        return `<button type="button" onclick="toggleSeries('${it.k}')" aria-pressed="${on}" title="${on ? 'Hide' : 'Show'} on the graph"
+            style="display:inline-flex;align-items:center;gap:.45rem;padding:.35rem .75rem;border-radius:9999px;cursor:pointer;
+                   border:1px solid ${on ? it.col : '#475569'};background:${on ? '#1e293b' : 'transparent'};color:${on ? '#f8fafc' : '#64748b'};
+                   box-shadow:${on ? '0 1px 2px rgba(0,0,0,.4)' : 'none'};${on ? '' : 'text-decoration:line-through;'}opacity:${on ? 1 : .75}">
+            <span style="opacity:${on ? 1 : .35};display:inline-flex">${sw}</span>${escapeHtml(it.label)}</button>`;
+    }).join('');
+}
+function toggleSeries(k) {
+    if (chartHidden.has(k)) chartHidden.delete(k); else chartHidden.add(k);
+    storageSet('athlone_chart_hidden', [...chartHidden]);
+    if (!forecastChart) return;
+    forecastChart.data.datasets.forEach(d => { if (d.k === k) d.hidden = chartHidden.has(k); });
+    forecastChart.update(); renderChartToggles();
 }
 
 // =================================================================
