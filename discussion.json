@@ -1,7 +1,7 @@
 {
-  "issued": "2026-11-17T16:40:00-08:00",
-  "next": "Wednesday ~5:30 AM, or sooner if the forecast changes a lot",
-  "headline": "Cold front Wednesday morning: heaviest rain likely 6–10 AM, close to a surge-boosted 7:21 AM high tide. Models backed off on peak intensity this afternoon.",
+  "issued": "2026-11-17T16:55-08:00",
+  "next": "by about 10 PM tonight, sooner if the models jump",
+  "headline": "Wednesday morning front: the latest HRRR cut its burst by roughly two-thirds, but the other models still show a soaking burst late morning.",
   "outlook": "storm",
   "sections": [
     {
@@ -10,7 +10,7 @@
     },
     {
       "title": "Model trends",
-      "text": "The models agree on a soaking (about 2.5–2.9 in through Thursday as of this afternoon) but not on how hard the main burst hits. Around midday HRRR showed close to 0.9 in in a single hour around 7–8 AM and about 1.4 in for the wettest 3 hours, which would have been at or above the Mar 2023 and Dec 2022 floods. Later runs cut that back sharply, and RRFS, the NWS blend (NBM) and ECMWF were already lower (roughly 1.1, 1.0 and 0.8 in for the wettest 3 hours at their last check). I couldn't pull the very latest runs while writing this, because the forecast service wasn't responding, so the dashboard's live chart is the place for current numbers. A big drop between runs is common with frontal bands like this one; it doesn't mean the threat is over."
+      "text": "The headline change this afternoon is the HRRR. Its midday run had close to 0.9 in in a single hour around 7–8 AM and about 1.4 in for the wettest 3 hours, which would have matched our worst floods. The 2 PM run shows only about 0.2 in in the wettest hour and about 0.4 in for the wettest 3 hours (8–11 AM). The other models did not follow it down. RRFS (10 AM run) still has about 0.65 in in one hour around 11 AM and 1.1 in in 3 hours; the NWS blend (NBM) has about 0.9 in and ECMWF about 0.8 in. Storm totals through Thursday run about 2.5–3.1 in in RRFS, NBM and ECMWF, while HRRR's total is about 1.4 in (to the end of its run). When one model swings this much between runs and the others don't, the safer read is that the timing and placement of the frontal band are uncertain, not that the storm has gone away. The next HRRR runs tonight should show whether the drop holds."
     },
     {
       "title": "Tide and the channel",
@@ -18,28 +18,50 @@
     },
     {
       "title": "Current observations",
-      "text": "Dry this afternoon. Atherton Channel at Caltrain is essentially empty (0.07 ft; the sensor reads dry below about 0.4 ft), so the system starts with all of its capacity. The ground is damp from Sunday and Monday's rain, so runoff will come quickly."
+      "text": "Dry this evening. Atherton Channel at Caltrain is essentially empty, so the system starts with all of its capacity. The ground is damp from Sunday and Monday's rain, so runoff will come quickly."
     },
     {
       "title": "Uncertainty",
-      "text": "Three things could make Wednesday worse than the latest numbers suggest. (1) Frontal rain bands are narrow: a 10–20 mile shift decides whether the heaviest core passes over Atherton. (2) HRRR has under-forecast every big local burst in our records, by about 3× in the worst cases (Mar 2023, Dec 2025). (3) Any thunderstorm along the front can drop 0.5 in in 20–30 minutes. Timing is uncertain by about ±2 hours, which decides how much it overlaps with the high tide. Most likely outcome: water to the garage doors (Yellow) at the peak. Garage + (Red) is plausible if the burst reaches about 1.2 in in 3 hours. Structure-level flooding (Purple) needs a much bigger burst than current guidance shows."
+      "text": "Model spread is large: 0.4 to 1.1 in for the wettest 3 hours. Frontal rain bands are narrow, so a 10–20 mile shift decides whether the heaviest core passes over Atherton. HRRR has under-forecast every big local burst in our records, by about 3× in the worst cases (Mar 2023, Dec 2025), and any thunderstorm along the front can drop 0.5 in in 20–30 minutes. Timing is uncertain by about ±2 hours. Most likely outcome: Green to Yellow at the peak. Red needs about 1.2 in in 3 hours, which only RRFS comes close to. Purple is not supported by any model."
     },
     {
       "title": "What to do tonight",
-      "text": "• Move cars out of the cul-de-sac before 6 AM.\n• Clear leaves from the street drain grates, yard drains and the ditch behind the houses this evening. The first big wind of the season brings down leaves, and a clogged grate floods the street at much lower rain totals.\n• If you use sandbags, set them before bed; the burst may arrive before daylight.\n• Wind Advisory overnight with gusts up to 50 mph near the coast: power outages are possible. The pump station needs power. If you lose power during the burst, assume the pumps may be slow and watch the street closely. Whether the station has backup power is a question for the county.\n• Glance at the pump station's status lights tonight if it's easy to; a red light before the storm is worth reporting.\n• During the peak, take a photo of the street with the time visible. Every documented storm improves the warning levels.\n• Keep the dashboard open in a tab. It records the forecast vs. what actually falls, which improves the bias factor, and the 1-hour burst alarm needs live readings.\n• Don't drive or walk through moving water on the street."
+      "text": "• Move cars out of the cul-de-sac before about 7 AM.\n• Clear leaves from the street drain grates and yard drains this evening. The first big wind of the season brings down leaves, and a clogged grate floods the street at much lower rain totals.\n• If you use sandbags, set them before bed; the heaviest rain could start soon after daylight.\n• Wind Advisory overnight: power outages are possible. The pump station needs power; if the power goes out during heavy rain, assume the pumps may be slow and watch the street.\n• During the peak, take a photo of the street with the time visible. Every documented storm improves the warning levels.\n• Keep the dashboard open in a tab: the 1-hour burst alarm needs live readings.\n• Don't drive or walk through moving water."
     }
   ],
   "sources": [
-    "NWS San Francisco Area Forecast Discussion 1:54 PM Tue Nov 17",
+    "Open-Meteo HRRR (2 PM run), RRFS (10 AM run), NBM and ECMWF as of 4:35 PM",
+    "NWS San Francisco Area Forecast Discussion 1:48 PM Tue Nov 17",
     "NWS alerts",
     "NOAA Tides & Currents 9414523 predictions + SF Bay OFS",
-    "Open-Meteo HRRR / RRFS / NBM / ECMWF (early afternoon runs)",
     "County gauge feed (Caltrain)"
   ],
   "summary": [
-    "Main burst Wednesday about 6–10 AM, overlapping a surge-boosted 7:21 AM high tide (~8.6 ft) that slows channel drainage.",
-    "Most likely: water up to garage doors (Yellow) at the peak; Garage + (Red) if the wettest 3 hours reach ~1.2 in.",
-    "Models cut peak intensity this afternoon, but HRRR has under-forecast big bursts here by up to 3×; don't count on the drop.",
-    "Tonight: cars out of the cul-de-sac before 6 AM, clear street drain grates, sandbags set before bed."
+    {
+      "type": "change",
+      "dir": "down",
+      "text": "Big drop: HRRR's wettest 3 hours fell from about 1.4 in (midday run) to about 0.4 in (2 PM run). That alone would mean only Blue–Green."
+    },
+    {
+      "type": "models",
+      "text": "Models disagree: RRFS 1.1 in, NBM 0.9, ECMWF 0.8 for the wettest 3 hours. HRRR is now the low outlier, and it has under-forecast big bursts here before."
+    },
+    {
+      "type": "risk",
+      "level": "garage",
+      "text": "Most likely Green to Yellow (water toward the garage doors) at the peak. Red is unlikely unless a thunderstorm cell sits over the area."
+    },
+    {
+      "type": "timing",
+      "text": "NWS has the front crossing the Bay Area 6–10 AM Wednesday; models put the heaviest hour 8–11 AM. Showers and thunderstorms return Wednesday night into Thursday."
+    },
+    {
+      "type": "tide",
+      "text": "7.0 ft high tide at 7:21 AM plus ~1.5 ft surge (Coastal Flood Advisory). The channel drains slowly through mid-morning, right before the rain peaks. Channel is empty now."
+    },
+    {
+      "type": "action",
+      "text": "Cars out of the cul-de-sac before 7 AM; clear street drain grates tonight. Watch the 1-hour burst alarm on the dashboard."
+    }
   ]
 }

@@ -14,11 +14,22 @@ county Atherton Channel gauges).
   (outlook = "quiet"). Otherwise leave it alone.
 
 ## Format (`discussion.json`)
-`issued` (ISO time with offset), `next` (plain words), `headline` (1 sentence), `summary` (3–4 short bullet strings, each
-under ~25 words: the most important things a neighbor needs, shown in a highlighted box that is visible without expanding —
-timing of the main threat, most likely street level, what changed, the one or two key actions), `outlook` ("storm" | "quiet"),
+`issued` (ISO time with offset), `next` (plain words), `headline` (1 sentence), `summary` (4–6 items, shown in a color-coded box visible without expanding; see below), `outlook` ("storm" | "quiet"),
 `sections` [{title, text}] — usually Synopsis, Model trends, Tide and the channel, Current observations, Uncertainty,
 What to do — and `sources` [strings]. Plain text only (no ** or other markup); use "\n• " for bullet lists.
+
+## The summary box (most people read only this)
+Flood-focused, not a general weather synopsis. Each item is `{"type", "text"}` with text under ~30 words:
+- `change` + `"dir": "up" | "down" | "shift"` — **lead with this whenever the forecast moved meaningfully** since the last
+  discussion (which model, from what to what, and what that means for the street). Shown as ▲ red / ▼ green / ◆ orange.
+- `risk` + `"level": "none" | "sidewalk" | "yard" | "garage" | "garageplus" | "structure"` — the most likely street level
+  at the peak, and what it would take to reach the next level. Colored with the dashboard's level color; also colors the box.
+- `models` — agreement or spread (the wettest-3-hour numbers per model), and which model is the outlier.
+- `timing` — when the burst most likely hits, and any second round.
+- `tide` — high tide/surge overlap with the burst, and the channel's current state.
+- `obs` — what's happening right now (only if notable).
+- `action` — the one or two things the street should do, with a time.
+Include one `risk` item whenever outlook is "storm". Order: change (if any), models, risk, timing, tide, action.
 
 ## Content rules
 - Write like an NWS forecaster explaining to neighbors: trends, observations, uncertainty, plain words.
