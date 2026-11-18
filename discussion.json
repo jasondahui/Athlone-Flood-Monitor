@@ -1,69 +1,69 @@
 {
-  "issued": "2026-11-18T01:25-08:00",
-  "next": "the next check runs about 4 AM; a fresh discussion by early afternoon, sooner if the models jump or the channel rises",
-  "headline": "The overnight HRRR jumped back up and now shows a 1-inch hour around noon, on top of a soaking frontal band at the 7 AM high tide; the other models are steadier at 0.6–1.0 in for the wettest 3 hours.",
+  "issued": "2026-11-18T10:20-08:00",
+  "next": "the next check runs about 1 PM; a fresh discussion this evening, sooner if the channel at Caltrain passes Flood Monitoring or the models jump again",
+  "headline": "The front is here and the channel at Caltrain is rising fast (2.08 ft, Monitoring is 2.8 ft); the HRRR backed off its noon cell, but RRFS and NBM came up, so the consensus for the wettest 3 hours is now about 1.0 in, solidly Yellow.",
   "outlook": "storm",
   "summary": [
     {
       "type": "change",
-      "dir": "up",
-      "text": "HRRR swung back: wettest 3 hours went from about 0.4 in (2 PM run) to about 1.4 in (11 PM run), with 1.05 in in the single hour ending at noon. RRFS went the other way, 1.1 to 0.6 in."
+      "dir": "shift",
+      "text": "Models swapped places: HRRR fell from 1.37 to 0.61 in for the wettest 3 hours (no more 1-inch hour), while RRFS rose from 0.61 to 1.14 in and NBM from 0.79 to 0.99 in. Consensus rose 0.79 → 0.99 in."
     },
     {
       "type": "models",
-      "text": "Wettest 3 hours: HRRR 1.37 in, ECMWF 0.99, NBM 0.79, RRFS 0.61. HRRR is now the high outlier. Consensus (HRRR ×1.25, RRFS, NBM: middle value) is 0.79 in."
+      "text": "Wettest 3 hours from 10 AM: RRFS 1.14 in, NBM 0.99, ECMWF 0.70, HRRR 0.61. RRFS is the wet outlier with 0.68 in from 1 to 2 PM. Consensus (HRRR ×1.25, RRFS, NBM: middle value) 0.99 in."
     },
     {
       "type": "risk",
       "level": "garage",
       "level_low": "yard",
-      "text": "Most likely water across the yards toward the garage doors (Yellow) at the peak. If HRRR's noon burst verifies, Red or Purple is possible; Red needs about 1.2 in in 3 hours."
+      "text": "Most likely water across the yards toward the garage doors (Yellow) at the peak. Red needs about 1.2 in in 3 hours; the RRFS (1.14 in) is just short of it."
     },
     {
       "type": "timing",
-      "text": "Frontal rain about 6–10 AM, heaviest burst most likely 10 AM–2 PM, with HRRR's cell right around noon. Showers and thunderstorms return tonight (HRRR about 0.5 in near 11 PM) and Thursday morning."
+      "text": "Heaviest rain most likely 10 AM to 3 PM: HRRR and NBM peak 10 AM–1 PM, RRFS 12–3 PM. Second round of showers and possible thunderstorms after midnight and again Thursday late morning."
     },
     {
       "type": "tide",
-      "text": "7.0 ft high tide at 7:21 AM, NOAA model about 8.6 ft (≈1.5 ft surge, Coastal Flood Advisory). The Bay stays about 1 ft above normal through the midday burst. Channel is near empty now."
+      "text": "The Bay is falling toward a 1:23 PM low (2.8 ft predicted, model about 4.2 ft, ~1.4 ft surge), so drainage improves through the burst. Caltrain channel gauge rose about 1 ft in the last 40 minutes."
     },
     {
       "type": "action",
-      "text": "Cars out of the cul-de-sac and drain grates cleared before 7 AM. Keep the dashboard open late morning through early afternoon for the 1-hour burst alarm."
+      "text": "Cars out of the cul-de-sac now if not already. Keep the dashboard open until about 3 PM and take timestamped photos of the street at the peak."
     }
   ],
   "sections": [
     {
       "title": "Synopsis",
-      "text": "A strong cold front is moving south from the North Bay, where rain began before midnight. NWS San Francisco (10:46 PM discussion) has the front crossing the Bay Area between 4 AM and 8 AM, with light to moderate rain ahead of it and isolated thunderstorms possible right along the boundary. Post-frontal showers and a better chance of thunderstorms follow tonight into Thursday morning as colder air and a surface low move in. NWS storm totals through Friday morning: 1.5–2.5 in for most of the Bay Area. Another, weaker front arrives Saturday into Sunday."
+      "text": "The cold front is crossing the Peninsula now; NWS San Francisco's 10 AM aviation update has the boundary passing SFO around 10 AM, with steady rain turning more showery this afternoon and evening. NWS issued a Flood Advisory for urban and small-stream flooding across the Bay Area (including Redwood City) until 11:45 AM, noting 0.5 to 1 in had already fallen and another 0.2 to 0.5 in expected. Behind the front, colder air and a surface low bring showers and isolated thunderstorms tonight into Thursday morning. NWS storm totals through Friday morning are unchanged: 1.5–2.5 in for most of the Bay Area. A weaker front follows Saturday into Sunday."
     },
     {
       "title": "What changed and model trends",
-      "text": "The HRRR flipped again. Yesterday's 2 PM run had cut the burst to about 0.4 in for the wettest 3 hours; the 11 PM run is back to 1.37 in (noon–3 PM), driven by one very wet hour: 1.05 in in the hour ending at noon. It also shows the frontal band itself fairly wet, about 0.7 in from 7 to 10 AM, before that cell. The HRRR 15-minute feed has the same cell but somewhat weaker, about 0.6 in between 11:15 AM and 12:15 PM, so even within the HRRR the size of the burst is uncertain.\n\nThe other models did not follow it up. RRFS (4 PM run) dropped from 1.1 in to 0.61 in for the wettest 3 hours (10 AM–1 PM), with no hour above 0.24 in. NBM is 0.79 in (10 AM–1 PM) and ECMWF 0.99 in (11 AM–2 PM). GFS shows the same numbers as HRRR here because it blends in HRRR for the first hours, so it isn't an independent vote.\n\nThe dashboard's consensus (HRRR ×1.25 = 1.71, RRFS 0.61, NBM 0.79; middle value) is 0.79 in, just into Yellow. HRRR's 1.05 in hour also trips the 1-hour rule (≥ 0.40 in means at least Yellow). Given HRRR's history of under-forecasting our big bursts and the thunderstorm potential along the front, I think the consensus is a reasonable floor, not a ceiling.\n\nStorm totals over the next 72 hours: ECMWF 3.8 in, HRRR 3.3 in (its run ends Thursday 10 PM), RRFS 2.3 in, NBM 2.2 in."
+      "text": "Since the 1 AM discussion the models traded places. The HRRR (8 AM run) dropped its big noon cell: the wettest 3 hours from now are 0.61 in (10 AM–1 PM) with no hour above 0.31 in, down from 1.37 in and a 1.05 in hour. The HRRR 15-minute feed has the wettest quarter-hour at 0.15 in ending 11:30 AM. Meanwhile the RRFS (10 PM run, now about 12 hours old) came up from 0.61 to 1.14 in (noon–3 PM), with 0.68 in in the hour from 1 to 2 PM, and NBM rose from 0.79 to 0.99 in (10 AM–1 PM). ECMWF is 0.70 in. GFS matches HRRR here because it blends HRRR in the first hours.\n\nThe dashboard's consensus (HRRR ×1.25 = 0.76, RRFS 1.14, NBM 0.99; middle value) is 0.99 in, up from 0.79 in, solidly in Yellow and below Red (about 1.18 in). The RRFS 0.68 in hour would also trip the 1-hour rule (0.40 in or more means at least Yellow). The HRRR has under-forecast our big bursts before, so I'd treat its 0.61 in as low; the RRFS can overdo convective cells, so 1.14 in is a reasonable upper middle. I think the consensus is about right.\n\nStorm totals for the next 72 hours: RRFS 2.49 in, NBM 2.21, GFS 2.13, HRRR 2.02, ECMWF 1.95."
     },
     {
       "title": "Tide and the channel",
-      "text": "Redwood City high tide is predicted at 7.0 ft (MLLW) at 7:21 AM, and NOAA's Bay model peaks near 8.6 ft around 7:30–7:45 AM, about 1.5 ft of surge. NWS has a Coastal Flood Advisory from 5 AM today to 10 AM Thursday. The frontal band arrives right at that high tide, when the Bayfront Canal and Atherton Channel drain slowest. The tide then falls toward a predicted 2.8 ft low at 1:23 PM, but the Bay model keeps it about 1 ft higher (near 4.0 ft around 2 PM), so drainage during the midday burst will be better than at dawn but not as good as a normal low tide. Thursday's high is higher: 7.4 ft predicted at 7:58 AM, with the Bay model near 9.6 ft (about 2 ft of surge), in case Thursday-morning thunderstorms bring a second burst.\n\nChannel: Atherton Channel at Alameda de las Pulgas read 0.14 ft at midnight (Flood Monitoring is 3.18 ft). The gauge upstream of Caltrain last reported 0.07 ft at 5:13 PM Tuesday (Monitoring 2.8 ft); its feed updates infrequently, so the reading is about 8 hours old."
+      "text": "This morning's 7.0 ft high tide (7:21 AM predicted) ran higher on NOAA's Bay model, near 8.9 ft around 7:55 AM, about 1.9 ft of surge. The tide is now falling toward a predicted 2.8 ft low at 1:23 PM; the Bay model holds it near 4.2 ft at 1 PM, about 1.4 ft above normal, so drainage during the midday burst is better than at dawn but still slowed. Tonight's high is 6.2 ft at 6:57 PM (model about 7.8 ft), and Thursday's 7.4 ft high at 7:58 AM shows about 9.7 ft on the model (roughly 2.3 ft of surge). The Coastal Flood Advisory now runs until 10 AM Friday.\n\nChannel: the gauge upstream of Caltrain is reporting often today and is rising quickly: 1.04 ft at 9:29 AM, 1.46 ft at 9:50 and 2.08 ft at 10:08 AM. County Flood Monitoring there is 2.8 ft (Watch 4.1, Warning 5.5). At that pace it could reach Monitoring within the hour if the heavy rain keeps up. At Alameda de las Pulgas the channel rose from 0.42 ft at 9 AM to 1.14 ft at 10 AM (Monitoring 3.18 ft)."
     },
     {
       "title": "Current observations",
-      "text": "Still dry on the street as of about 1 AM; none of the models has measurable rain here yet. Rain is under way in the North Bay and moving south. The channel is essentially empty, so the system starts with all of its capacity, but the ground is damp from earlier this week and runoff will come quickly once the rain gets going."
+      "text": "Rain is under way and picked up after 9 AM. The rain gauge at Caltrain had 0.56 in in the last 24 hours as of 9:42 AM, 0.32 in in the last 3 hours and 0.12 in in the last hour, with 0.20 in in the 9 AM hour, the wettest so far. The first channel rise came with the frontal rain around 5:45 AM (Caltrain gauge 0.07 to 1.04 ft), it eased after 7 AM, and the second, faster rise began about 9:30 AM."
     },
     {
       "title": "Uncertainty",
-      "text": "High. The wettest-3-hour spread is 0.61 to 1.37 in, and the HRRR alone has swung from 1.4 to 0.4 and back to 1.4 in in three runs. That kind of flip-flop usually means a narrow, intense rain band or embedded storm cell whose exact track the models can't pin down; a 10–20 mile shift decides whether it hits Atherton. Any thunderstorm can drop 0.5 in in 20–30 minutes regardless of what the models show. Most likely outcome: Yellow at the peak, possibly Green if the RRFS is right. Red (about 1.2 in in 3 hours) or Purple (about 1.4 in) requires the HRRR's noon cell to verify over us. The RRFS run is now about 9 hours old; newer RRFS and HRRR runs before dawn should help."
+      "text": "Moderate to high. The wettest-3-hour spread is 0.61 to 1.14 in, and the HRRR and RRFS have swapped roles between runs, which usually means the models can't place the heaviest cells along the front. The RRFS run is about 12 hours old; newer runs could move it either way. Any embedded thunderstorm can drop 0.5 in in 20–30 minutes. Most likely outcome: Yellow at the peak. Red (about 1.2 in in 3 hours) needs the RRFS's 1–2 PM burst to verify over us. The fast channel rise is the thing to watch: a channel at county levels slows street drainage no matter what the rain does."
     },
     {
-      "title": "What to do this morning",
-      "text": "• Move cars out of the cul-de-sac before about 7 AM; the frontal rain arrives at high tide and the heaviest burst may follow late morning.\n• Clear leaves from the street drain grates and yard drains before 7 AM if it's safe to be outside; strong south winds overnight will bring down more leaves.\n• If you use sandbags, set them before the rain starts.\n• Gusty winds this morning can cause power outages. The pump station needs power; if the power goes out during heavy rain, assume the pumps may be slow and watch the street.\n• Keep the dashboard open from late morning through early afternoon: the 1-hour burst alarm needs live readings.\n• During the peak, take a photo of the street with the time visible.\n• Don't drive or walk through moving water."
+      "title": "What to do now",
+      "text": "• Move cars out of the cul-de-sac now if they are still there.\n• If it's safe, clear leaves from the street drain grates and yard drains during a lull; strong south winds are still bringing leaves down.\n• Gusty winds can cause power outages, and the pump station needs power. If the power goes out during heavy rain, assume the pumps may be slow and watch the street.\n• Keep the dashboard open until about 3 PM: the 1-hour burst alarm and the channel levels need live readings.\n• At the peak, take a photo of the street with the time visible.\n• Plan for a second round after midnight and Thursday late morning.\n• Don't drive or walk through moving water."
     }
   ],
   "sources": [
-    "Open-Meteo HRRR (11 PM run) and HRRR 15-minute, RRFS (4 PM run), NBM, ECMWF and GFS, snapshot fetched 12:42 AM Wed Nov 18",
-    "NWS San Francisco Area Forecast Discussion 10:46 PM Tue Nov 17",
-    "NWS alerts (Coastal Flood Advisory)",
+    "Open-Meteo HRRR (8 AM run) and HRRR 15-minute, RRFS (10 PM Tue run), NBM, ECMWF and GFS, snapshot fetched 10:16 AM Wed Nov 18",
+    "NWS San Francisco Area Forecast Discussion 10:00 AM Wed Nov 18 (aviation update; short term from 10:41 PM Tue)",
+    "NWS alerts (Flood Advisory until 11:45 AM; Coastal Flood Advisory until 10 AM Fri)",
     "NOAA Tides & Currents 9414523 predictions + SF Bay OFS",
-    "County gauge feed (Atherton Channel at Alameda de las Pulgas; upstream of Caltrain, last reading 5:13 PM Tue)",
+    "County gauge feed (Atherton Channel upstream of Caltrain at 10:08 AM and at Alameda de las Pulgas at 10:00 AM; Caltrain rain gauge 9:42 AM)",
     "Written automatically by Claude from public data — not an official forecast; follow NWS and SMC Alert."
   ]
 }
