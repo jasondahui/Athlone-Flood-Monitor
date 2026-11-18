@@ -136,16 +136,16 @@
     <section class="bg-slate-800 p-4 sm:p-6 rounded-2xl border border-slate-700 shadow-xl space-y-3">
         <div class="flex flex-wrap items-baseline justify-between gap-2">
             <div class="flex items-center gap-3">
-                <h3 class="text-md font-semibold text-slate-300">Satellite &amp; radar</h3>
+                <h3 class="text-md font-semibold text-slate-300">Radar &amp; satellite</h3>
                 <div class="inline-flex rounded-lg border border-slate-600 overflow-hidden text-xs" role="group">
-                    <button type="button" id="wxBtn-satellite" onclick="setWxLayer('satellite')" style="padding:.3rem .7rem">Satellite</button>
-                    <button type="button" id="wxBtn-radar" onclick="setWxLayer('radar')" style="padding:.3rem .7rem;border-left:1px solid #475569">Radar</button>
+                    <button type="button" id="wxBtn-radar" onclick="setWxLayer('radar')" style="padding:.3rem .7rem">Radar</button>
+                    <button type="button" id="wxBtn-satellite" onclick="setWxLayer('satellite')" style="padding:.3rem .7rem;border-left:1px solid #475569">Satellite</button>
                 </div>
             </div>
             <a id="wxOpen" href="https://www.windy.com/?satellite,37.477,-122.192,7" target="_blank" rel="noopener" class="text-xs text-sky-300 underline">Open in Windy ↗</a>
         </div>
         <iframe id="windyFrame" title="Windy satellite and radar view" loading="lazy" class="w-full rounded-xl border border-slate-700" style="height:460px" frameborder="0"></iframe>
-        <p class="text-[0.7rem] text-slate-500">Satellite imagery by <a class="underline" href="https://www.windy.com" target="_blank" rel="noopener">Windy.com</a>. Satellite shows the clouds: an incoming front is a band of bright cloud approaching from the west or northwest. Radar shows where rain is falling now; yellow, orange and red are the heavy cores. Press ▶ to loop the last few hours. Windy's embed can show one layer at a time.</p>
+        <p class="text-[0.7rem] text-slate-500">Satellite imagery by <a class="underline" href="https://www.windy.com" target="_blank" rel="noopener">Windy.com</a>. Satellite shows the clouds: an incoming front is a band of bright cloud approaching from the west or northwest. Radar shows where rain is falling now; yellow, orange and red are the heavy cores. Press ▶ to loop the last few hours. The embedded map shows one layer at a time; open it in Windy to blend radar over satellite.</p>
     </section>
 
     <!-- Drainage map -->
@@ -237,6 +237,7 @@
         </div>
         <details class="text-xs text-slate-500"><summary class="cursor-pointer text-slate-400">Version <span id="appVersion"></span>: change history</summary>
             <ul class="list-disc pl-5 mt-1 space-y-0.5">
+                <li><b>2.39</b> (Nov 18, 2026): radar is the default Windy view.</li>
                 <li><b>2.38</b> (Nov 18, 2026): Satellite / Radar toggle on the Windy view.</li>
                 <li><b>2.37</b> (Nov 18, 2026): risk card and storm library collapse together, cut off just below the model consensus line; Windy satellite view added below them.</li>
                 <li><b>2.36</b> (Nov 17, 2026): Storm discussion collapses to a one-line bar like the NWS alerts; tap to open the summary and full text.</li>
@@ -290,7 +291,7 @@ const TZ = 'America%2FLos_Angeles';
 const GATE_DATE = '2024-11-01';          // county flap gate installed Nov 2024
 const NAVD_OFFSET = 1.18;                // NOAA 9414523: NAVD88 = MLLW − 1.18 ft
 const STREET_NAVD = 21;                  // USGS 3DEP ground elevation on Athlone Way
-const VERSION = '2.38 (Nov 18, 2026)';
+const VERSION = '2.39 (Nov 18, 2026)';
 // Text size: the page is rem-based, so one root percentage scales everything; the chart and map follow it
 const uiScale = () => (storageGet('athlone_textsize', 115)) / 100;
 function applyTextSize() {
@@ -1579,7 +1580,7 @@ function setWxLayer(name) {
     Object.keys(WX_LAYERS).forEach(k => { const b = document.getElementById('wxBtn-' + k); if (!b) return;
         b.style.background = k === name ? '#0284c7' : 'transparent'; b.style.color = k === name ? '#fff' : '#cbd5e1'; b.setAttribute('aria-pressed', k === name); });
 }
-setWxLayer(storageGet('athlone_wx_layer', 'satellite'));
+setWxLayer(storageGet('athlone_wx_layer', 'radar'));   // radar by default; the choice is remembered per browser
 
 </script>
 </body>
