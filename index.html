@@ -13,6 +13,7 @@
         .tbl td, .tbl th { padding: 6px 8px; white-space: nowrap; }
       mark.disc-hl { background: rgba(251,191,36,.18); color: #fde68a; font-weight: 600; padding: 0 .2em; border-radius: 3px; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
 </style>
+<style>#discussionBox summary{list-style:none;display:flex;align-items:center;gap:.5rem;min-width:0} #discussionBox summary::-webkit-details-marker{display:none} #discussionBox summary > span{flex-shrink:0;white-space:nowrap} #discussionBox summary > #discHeadline{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap} #discMeta{flex-shrink:0;margin-left:auto} #discussionBox[open] #discSummary{margin-top:.6rem} #discussionBox .disc-chev{transition:transform .15s} #discussionBox[open] .disc-chev{transform:rotate(90deg)} #discussionBox[open] summary > #discHeadline{white-space:normal}</style>
 </head>
 <body class="p-4 md:p-8">
 <div class="max-w-7xl mx-auto space-y-6">
@@ -35,8 +36,9 @@
         </div>
     </header>
 
-    <details id="discussionBox" class="hidden bg-slate-800 border border-sky-800 rounded-2xl p-4 text-sm shadow-xl">
-        <summary class="cursor-pointer"><span class="font-semibold text-sky-200">🌧️ Storm discussion</span> <span id="discMeta" class="text-xs text-slate-400"></span><div id="discHeadline" class="text-slate-200 mt-1"></div><div id="discSummary" class="hidden mt-2 rounded-xl border-l-4 px-3 py-2 space-y-1.5 text-slate-100"></div><div class="text-xs text-sky-300 mt-2">Tap for the full discussion</div></summary>
+    <details id="discussionBox" class="hidden bg-sky-950/60 border border-sky-800 rounded-xl p-3 text-sm">
+        <summary class="cursor-pointer flex items-center gap-2 min-w-0 list-none"><span class="disc-chev shrink-0 text-sky-300 text-xs">▶</span><span id="discDot" style="display:inline-block;width:.65rem;height:.65rem;border-radius:50%;background:#f59e0b"></span><span class="shrink-0 font-semibold text-sky-100">Storm discussion</span><span id="discHeadline" class="truncate text-slate-300 min-w-0"></span><span id="discMeta" class="shrink-0 ml-auto text-xs text-slate-400"></span></summary>
+        <div id="discSummary" class="hidden"></div>
         <div id="discBody" class="mt-3 space-y-3 text-slate-300"></div>
     </details>
     <div id="nwsBanner" class="hidden"></div>
@@ -218,6 +220,7 @@
         </div>
         <details class="text-xs text-slate-500"><summary class="cursor-pointer text-slate-400">Version <span id="appVersion"></span>: change history</summary>
             <ul class="list-disc pl-5 mt-1 space-y-0.5">
+                <li><b>2.36</b> (Nov 17, 2026): Storm discussion collapses to a one-line bar like the NWS alerts; tap to open the summary and full text.</li>
                 <li><b>2.35</b> (Nov 17, 2026): the chart's 3-hour line and level strip follow the model consensus (matching the rating), with a shaded band for the lowest-to-highest model.</li>
                 <li><b>2.34</b> (Nov 17, 2026): rating uses the model consensus (middle of HRRR, RRFS and NBM hardest 3 h) instead of HRRR alone; per-model table on the risk card; RRFS/NBM forecasts logged for bias learning. Setting to switch back to HRRR only.</li>
                 <li><b>2.33</b> (Nov 17, 2026): color-coded summary box at the top of the Storm discussion (flood risk, forecast changes, models, timing, tide, actions); action items written for the whole street.</li>
@@ -268,7 +271,7 @@ const TZ = 'America%2FLos_Angeles';
 const GATE_DATE = '2024-11-01';          // county flap gate installed Nov 2024
 const NAVD_OFFSET = 1.18;                // NOAA 9414523: NAVD88 = MLLW − 1.18 ft
 const STREET_NAVD = 21;                  // USGS 3DEP ground elevation on Athlone Way
-const VERSION = '2.35 (Nov 17, 2026)';
+const VERSION = '2.36 (Nov 17, 2026)';
 // Text size: the page is rem-based, so one root percentage scales everything; the chart and map follow it
 const uiScale = () => (storageGet('athlone_textsize', 115)) / 100;
 function applyTextSize() {
@@ -1464,10 +1467,10 @@ const DISCUSSION_URL = 'https://raw.githubusercontent.com/jasondahui/athlone-flo
 function renderDiscussion(d) {
     const box = document.getElementById('discussionBox'); if (!box || !d) return;
     const issued = new Date(d.issued), ageH = (Date.now() - issued.getTime()) / 3600000;
-    const when = issued.toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+    const when = issued.toLocaleString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit' });
     box.classList.remove('hidden');
-    document.getElementById('discMeta').innerText = `issued ${when}` + (ageH > 18 ? ` · ${Math.round(ageH)} h old, may be out of date` : '') + (d.next && ageH <= 18 ? ` · next: ${d.next}` : '');
-    document.getElementById('discMeta').className = 'text-xs ' + (ageH > 18 ? 'text-amber-300' : 'text-slate-400');
+    document.getElementById('discMeta').innerText = when + (ageH > 18 ? ` · ${Math.round(ageH)} h old` : '');
+    document.getElementById('discMeta').className = 'shrink-0 ml-auto text-xs ' + (ageH > 18 ? 'text-amber-300' : 'text-slate-400');
     const plain = t => escapeHtml((t || '').replace(/\*\*(.+?)\*\*/g, '$1'));   // older discussions used **bold**; the summary box replaces it
     document.getElementById('discHeadline').innerHTML = plain(d.headline);
     // Summary box: flood-focused key points, each tagged and colored. Items are {type, text, level?, dir?} (plain strings still work).
@@ -1497,7 +1500,9 @@ function renderDiscussion(d) {
     Object.assign(sumEl.style, { borderLeft: `4px solid ${boxCol}`, background: boxCol + '14', borderRadius: '.75rem', padding: '.5rem .75rem', marginTop: '.5rem' });
     sumEl.querySelectorAll(':scope > div + div').forEach(x => x.style.marginTop = '.4rem');
     sumEl.classList.toggle('hidden', !pts.length);
-    document.getElementById('discBody').innerHTML = (d.sections || []).map(s => `<div><div class="font-semibold text-slate-200">${escapeHtml(s.title)}</div><div class="whitespace-pre-line leading-relaxed">${plain(s.text)}</div></div>`).join('')
+    const dot = document.getElementById('discDot'); if (dot) dot.style.background = boxCol;
+    const bodyMeta = `Issued ${issued.toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}` + (d.next ? ` · next update: ${d.next}` : '') + (ageH > 18 ? ' · may be out of date' : '');
+    document.getElementById('discBody').innerHTML = `<div class="text-xs ${ageH > 18 ? 'text-amber-300' : 'text-slate-400'}">${escapeHtml(bodyMeta)}</div>` + (d.sections || []).map(s => `<div><div class="font-semibold text-slate-200">${escapeHtml(s.title)}</div><div class="whitespace-pre-line leading-relaxed">${plain(s.text)}</div></div>`).join('')
         + (d.sources?.length ? `<div class="text-xs text-slate-500">Based on: ${d.sources.map(escapeHtml).join(' · ')}. Written by Claude (AI) from these sources; it is not an official forecast. Follow NWS warnings.</div>` : '');
 }
 renderDiscussion(DISCUSSION_EMBEDDED);
