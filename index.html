@@ -74,6 +74,7 @@
             </div>
         </div>
         <div class="flex flex-wrap items-center gap-2 text-xs"><span class="text-slate-400">Show on graph:</span><div id="chartToggles" class="flex flex-wrap gap-2"></div></div>
+        <div id="chartStale" class="hidden rounded-lg border border-amber-500 bg-amber-500/15 text-amber-200 text-sm font-semibold px-3 py-2"></div>
         <div class="relative w-full h-[460px]"><canvas id="forecastChart"></canvas></div>
         <p id="chartNote" class="text-xs text-slate-500"></p>
     </div>
@@ -248,6 +249,7 @@
         </div>
         <details class="text-xs text-slate-500"><summary class="cursor-pointer text-slate-400">Version <span id="appVersion"></span>: change history</summary>
             <ul class="list-disc pl-5 mt-1 space-y-0.5">
+                <li><b>2.46</b> (Nov 19, 2026): warning on the graph when its forecast is old or a saved copy; saved backup forecast limited to 3 h (was 12 h); status line shows which HRRR run is used; refreshes after the computer wakes from sleep.</li>
                 <li><b>2.45</b> (Nov 18, 2026): radar scale labels simplified (inches shown as ").</li>
                 <li><b>2.44</b> (Nov 18, 2026): radar color scale in inches per hour under the map, marked with the burst alarm and the rate that reaches each flood level if it lasts 3 hours.</li>
                 <li><b>2.43</b> (Nov 18, 2026): radar scale conversion to inches under the Windy map.</li>
@@ -308,7 +310,7 @@ const TZ = 'America%2FLos_Angeles';
 const GATE_DATE = '2024-11-01';          // county flap gate installed Nov 2024
 const NAVD_OFFSET = 1.18;                // NOAA 9414523: NAVD88 = MLLW − 1.18 ft
 const STREET_NAVD = 21;                  // USGS 3DEP ground elevation on Athlone Way
-const VERSION = '2.45 (Nov 18, 2026)';
+const VERSION = '2.46 (Nov 19, 2026)';
 // Text size: the page is rem-based, so one root percentage scales everything; the chart and map follow it
 const uiScale = () => (storageGet('athlone_textsize', 115)) / 100;
 function applyTextSize() {
@@ -1201,11 +1203,12 @@ async function fetchRainForecast() {
     // Three requests in parallel (one try each, 45 s): HRRR+blend hourly, plain blend hourly, HRRR 15-min.
     // Open-Meteo sometimes takes 30-40 s or drops requests; running them side by side keeps the worst case near 45 s.
     const base = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&hourly=precipitation&precipitation_unit=inch&timezone=${TZ}&past_days=2&forecast_days=3`;
-    const [hr, plain, m15, alt] = await Promise.allSettled([
+    const [hr, plain, m15, alt, meta] = await Promise.allSettled([
         fetchJson(base + '&models=best_match,gfs_hrrr', 45000, 1),
         fetchJson(base, 45000, 1),
         fetchJson(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&minutely_15=precipitation&precipitation_unit=inch&timezone=${TZ}&forecast_days=2&models=ncep_hrrr_conus`, 45000, 1),
-        fetchJson(base + '&models=ncep_rrfs_conus,ncep_nbm_conus', 45000, 1)   // second opinions for the consensus rating
+        fetchJson(base + '&models=ncep_rrfs_conus,ncep_nbm_conus', 45000, 1),   // second opinions for the consensus rating
+        fetchJson('https://api.open-meteo.com/data/ncep_hrrr_conus/static/meta.json', 20000, 1)   // which HRRR run this is (to compare with Windy)
     ]);
     let out;
     if (hr.status === 'fulfilled') {
@@ -1216,7 +1219,7 @@ async function fetchRainForecast() {
         out = { times: plain.value.hourly.time, precip: plain.value.hourly.precipitation, source: 'blended model (HRRR unavailable)' };
     } else {
         const c = storageGet('athlone_fc_cache', null);
-        if (c && Date.now() - c.at < 12 * 3600000) return { ...c.out, source: `saved forecast from ${new Date(c.at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })} (Open-Meteo not responding)`, stale: true };
+        if (c && Date.now() - c.at < 3 * 3600000) return { ...c.out, source: `saved forecast from ${new Date(c.at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })} (Open-Meteo not responding)`, stale: true };
         throw hr.reason || plain.reason;
     }
     // HRRR 15-minute output: finer timing for the next ~18+ h (matched Windy better than the hourly series on Nov 13).
@@ -1241,6 +1244,9 @@ async function fetchRainForecast() {
             if (vals.some(v => v != null)) out.others[k] = vals;
         });
     }
+    const init = meta.status === 'fulfilled' ? meta.value.last_run_initialisation_time : null;
+    if (init) { out.hrrrRun = init * 1000; out.source += ` (HRRR run from ${new Date(init * 1000).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })})`; }
+    out.fetchedAt = Date.now();
     storageSet('athlone_fc_cache', { at: Date.now(), out });
     return out;
 }
@@ -1268,11 +1274,11 @@ async function getGaugeHistory(force) {
     return out;
 }
 
-let loadSeq = 0;
+let loadSeq = 0, liveLoading = false;
 async function loadLiveData(force = false) {
     currentMode = { type: 'live' };
     // Each load gets a number; results from an older, slower load are ignored, so Refresh always works (no disabled button)
-    const my = ++loadSeq;
+    const my = ++loadSeq; liveLoading = true;
     const btn = document.getElementById('btnFetchLive');
     btn.innerText = '⏳ Refreshing…';
     setStatus('Loading live data…', 'info');
@@ -1317,7 +1323,7 @@ async function loadLiveData(force = false) {
             ? ' The browser could not reach the data servers. If this file was opened from an email or file preview, or in Safari, save it and open it in Chrome, Edge or Firefox.' : '';
         if (my !== loadSeq) return;
         showNoData('⚠ LIVE DATA FAILED — ' + what + '.' + hint);
-    } finally { if (my === loadSeq) btn.innerText = '🔄 Refresh Live Data'; }
+    } finally { if (my === loadSeq) { btn.innerText = '🔄 Refresh Live Data'; liveLoading = false; } }
 }
 
 function renderModelTable(runs, consPeak, cal, times, fromIdx, noFc, ratedKey = 'consensus') {
@@ -1515,6 +1521,13 @@ function renderLive() {
     if (hist?.error) caveats.push('Gauge archive unavailable (' + hist.error + '); past rain bars show the forecast model instead.');
     if (livePick?.source) caveats.push(`The Caltrain rain sensor is reading far below nearby gauges (${livePick.primary.toFixed(2)} vs ${livePick.backup.toFixed(2)} in over 24 h), so past rain uses the ${livePick.source}. The sensor may be clogged.`);
     document.getElementById('riskCaveat').innerText = caveats.join(' ');
+    // Old-forecast warning on the graph itself, so a saved or stale forecast can't pass for a current one
+    const fcAge = rainData.fetchedAt ? Date.now() - rainData.fetchedAt : 0, staleEl = document.getElementById('chartStale');
+    if (staleEl) {
+        const old = rainData.stale || fcAge > 90 * 60000;
+        staleEl.classList.toggle('hidden', !old || rainData.noForecast);
+        if (old) staleEl.innerText = `⚠ The rain forecast on this graph is from ${new Date(rainData.fetchedAt || Date.now()).toLocaleTimeString([], { weekday: 'short', hour: 'numeric', minute: '2-digit' })}${rainData.stale ? ' (the newest forecast could not be loaded)' : ''}. It may be out of date. Press Refresh Live Data.`;
+    }
     setStatus('LIVE — updated ' + fetchedAt.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) + ' · Rain forecast: ' + rainData.source + (haveGauge ? ' · past rain measured' : '') + (archIssues().concat(liveCache.issues || []).length ? ' · unavailable: ' + archIssues().concat(liveCache.issues || []).join(', ') : ''), archIssues().concat(liveCache.issues || []).length ? 'bench' : 'live');
 }
 
@@ -1537,12 +1550,18 @@ setInterval(() => {
     const r = gaugeFeed?.rainCal; if (!r || !((r.rain1 || 0) > 0 || (r.rain15m || 0) > 0)) return;
     fetchGaugeFeed().then(g => { gaugeFeed = g; renderGauges(g); renderLive(); }).catch(e => console.warn('feed poll failed', e));
 }, 5 * 60000);
-// Coming back to the tab (or waking the computer): refresh right away if the live data is more than 10 minutes old
-document.addEventListener('visibilitychange', () => {
-    if (document.hidden || currentMode.type !== 'live') return;
+// Coming back to the tab, focusing the window, or waking the computer: refresh right away if the live data is more
+// than 10 minutes old. A once-a-minute wall-clock check also catches a computer that slept with the page on screen
+// (timers pause during sleep, and no visibility change fires).
+function refreshIfOld(limitMin = 10) {
+    if (document.hidden || currentMode.type !== 'live' || liveLoading) return;
     const age = liveCache?.fetchedAt ? Date.now() - liveCache.fetchedAt.getTime() : Infinity;
-    if (age > 10 * 60000) loadLiveData();
-});
+    if (age > limitMin * 60000) loadLiveData();
+}
+document.addEventListener('visibilitychange', () => refreshIfOld());
+window.addEventListener('focus', () => refreshIfOld());
+window.addEventListener('pageshow', () => refreshIfOld());
+setInterval(() => refreshIfOld(12), 60000);
 
 window.onload = () => {
     refreshAll();
