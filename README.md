@@ -1,7 +1,7 @@
 # Athlone Terrace Flood Monitor
 
 A flood-risk dashboard for the Athlone Terrace neighborhood (North Fair Oaks, San Mateo County).
-Live page: https://jasondahui.github.io/athlone-flood-monitor/
+Live page: https://jasondahui.github.io/Athlone-Flood-Monitor/
 
 It combines the county's Atherton Channel gauges, NOAA's HRRR rain forecast, NWS alerts and Bay tides
 into one risk rating, with a storm library of past events. **It is not an official warning. Follow NWS and SMC Alert.**
