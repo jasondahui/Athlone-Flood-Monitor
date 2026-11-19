@@ -37,8 +37,8 @@ Include one `risk` item whenever outlook is "storm". Order: change (if any), mod
   middle value. Compute the same consensus so the discussion's `risk` item matches what neighbors see on the rating card,
   and say so when you think the consensus is too low or too high (e.g. HRRR under-forecast history, RRFS over-intense
   convection).
-- Use the dashboard's scale and numbers: wettest 3 hours (in) vs thresholds — Yellow (garage) ~0.75, Red (garage +)
-  ≥ 1.18, Purple (structure) ≥ 1.43 in per 3 h with the 1.25 HRRR bias; 1-hour burst ≥ 0.40 in → at least Yellow.
+- Use the dashboard's scale and numbers: wettest 3 hours (in) vs thresholds — Yellow (garage) ~0.71, Red (garage +)
+  ≥ 1.01, Purple (structure) ≥ 1.26 in per 3 h with the 1.25 HRRR bias; 1-hour burst ≥ 0.40 in → at least Yellow.
   HRRR has under-forecast big local bursts by ~3×. Morning high tides with surge slow channel drainage.
 - Say clearly what changed since the last discussion and why it matters.
 - Practical directions where relevant, written for the whole street, never for one particular house (cars out of the
