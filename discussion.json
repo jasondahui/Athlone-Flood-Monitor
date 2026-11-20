@@ -1,69 +1,68 @@
 {
-  "issued": "2026-11-19T13:20-08:00",
-  "next": "the next check runs about 4:30 PM; a fresh discussion tonight if the HRRR's Friday-morning cell grows or other models pick it up, otherwise Friday morning",
-  "headline": "The latest HRRR moved its lone downpour from 10 PM tonight to about 4 to 6 AM Friday and made it stronger (0.54 in in 3 hours, nearly all in one hour), but no other model backs it, so the consensus stays at 0.39 in, below Yellow.",
+  "issued": "2026-11-19T16:20-08:00",
+  "next": "the next check runs about 7:30 PM; a fresh discussion tonight only if a model brings back a strong Friday-morning cell, otherwise Friday morning",
+  "headline": "The new HRRR dropped its Friday-morning downpour (0.54 in in 3 hours down to almost nothing) and NBM also eased, so the consensus fell from 0.39 to 0.12 in: showers only, no street flooding expected.",
   "outlook": "storm",
   "summary": [
     {
       "type": "change",
-      "dir": "shift",
-      "text": "HRRR's single strong cell moved from 10 PM tonight to about 4–6 AM Friday and grew from 0.34 in to 0.54 in (0.48 in in one hour). Consensus unchanged at 0.39 in."
+      "dir": "down",
+      "text": "HRRR's 2 PM run removed the strong 4–6 AM Friday cell (0.54 in down to 0.02 in). NBM eased from 0.23 to 0.12 in. Consensus fell from 0.39 to 0.12 in."
     },
     {
       "type": "models",
-      "text": "Wettest 3 hours in the next 72 h: HRRR 0.54 in, GFS 0.54 (copies HRRR), RRFS 0.39, NBM 0.23, ECMWF 0.07. Consensus (HRRR ×1.25 = 0.68, RRFS 0.39, NBM 0.23: middle value) 0.39 in."
+      "text": "Wettest 3 hours in the next 72 h: RRFS 0.39 in (older 4 AM run, the outlier), ECMWF 0.15, NBM 0.12, GFS 0.06, HRRR 0.02. Consensus (HRRR ×1.25 = 0.03, RRFS 0.39, NBM 0.12: middle value) 0.12 in."
     },
     {
       "type": "risk",
-      "level": "sidewalk",
-      "level_low": "none",
-      "text": "Most likely no more than water on the sidewalk in a downpour. Yellow (garage) needs about 0.71 in in 3 hours or a measured 0.40 in hour; only the HRRR cell comes close."
+      "level": "none",
+      "text": "Most likely no water beyond the gutters. Water on the sidewalk would take a surprise downpour; Yellow (garage) needs about 0.71 in in 3 hours or a 0.40 in hour, and no model is close."
     },
     {
       "type": "timing",
-      "text": "Scattered showers this afternoon and evening. HRRR's cell around 4–6 AM Friday; RRFS and NBM favor steadier showers about 7–10 AM Friday. A light round Saturday evening."
+      "text": "A few showers tonight. The wettest hours most models agree on are roughly 3 to 10 AM Friday, all light. Another light round Saturday evening (RRFS) or Sunday afternoon (ECMWF)."
     },
     {
       "type": "tide",
-      "text": "Friday's 7.9 ft high at 8:32 AM runs about 9.9 ft on the NOAA Bay model (~2 ft surge), right with the Friday-morning showers. Caltrain channel 0.76 ft, rising slowly, far below Monitoring (2.8 ft)."
+      "text": "Friday's 7.9 ft high at 8:32 AM runs about 9.9 ft on the NOAA Bay model (~2 ft surge), during the Friday-morning showers. Caltrain channel 0.13 ft and falling, far below Monitoring (2.8 ft)."
     },
     {
       "type": "action",
-      "text": "Clear drain grates this afternoon. No cars need to move on the consensus; check the page around 4–9 AM Friday, and move cars if a 0.40 in hour shows up."
+      "text": "No need to move cars. Clear drain grates if you haven't yet, and glance at the page between 4 and 9 AM Friday in case a cell pops up."
     }
   ],
   "sections": [
     {
       "title": "Synopsis",
-      "text": "The upper low is moving south and inland. NWS San Francisco's 10:30 AM update says showers continue across the region through early Friday afternoon, with a slight chance of thunderstorms near the coast into early afternoon before the instability shifts inland and the thunder threat fades for the Bay Area. A colder front late tonight into Friday gradually cuts back the showers, followed by cold mornings Friday and Saturday. A weaker system late Saturday favors the North Bay, and NWS flags Tuesday into Wednesday of next week as the next chance for heavier rain (mainly North Bay) along with more coastal flooding from the approaching king tides."
+      "text": "The surface low has moved inland and the thunderstorm threat is shifting to the Central Valley. NWS San Francisco's 1:51 PM update keeps chances for showers near the coast and adjacent inland areas through Friday afternoon, with the thunderstorm chance under 5% on Friday, followed by cold mornings Friday and Saturday. A frontal boundary late Saturday morning is now expected to fizzle as it moves south from the North Bay, so NWS no longer expects widespread rain this weekend, just post-frontal showers into Monday morning. The next system to watch arrives Tuesday into Wednesday, with NWS mentioning 1 to 3 in for the North Bay and coastal ranges, and the king tides arrive with it."
     },
     {
       "title": "What changed and model trends",
-      "text": "Since the 10:20 AM discussion, the new HRRR (11 AM run) dropped its 10 PM cell and instead puts a strong one early Friday: 0.48 in in the hour ending 5 AM and 0.06 in the next hour, for 0.54 in in its wettest 3 hours (up from 0.34 in). Its 15-minute output is less concentrated, with about 0.22 in from 4:30 to 5:00 AM and light rain after. GFS shows the same 0.48 in hour because it uses HRRR in the short range, so it is not an independent vote.\n\nThe other models do not support a burst that strong. RRFS (4 AM run) has 0.39 in in its wettest 3 hours, about 7 to 10 AM Friday, with no hour above 0.15 in. NBM has 0.23 in over the same 7 to 10 AM window, no hour above 0.08 in. ECMWF is nearly dry here, 0.07 in at most in 3 hours. Like this morning's 10 PM cell, I treat the HRRR's 5 AM hour as a possible shower or thunderstorm cell with low confidence, not a trend. What the models do agree on is a wetter few hours Friday morning, between roughly 4 and 10 AM.\n\nThe dashboard's consensus (HRRR ×1.25 = 0.68, RRFS 0.39, NBM 0.23; middle value) is 0.39 in, the same as at 10 AM. That seems reasonable for a showery pattern. The way it ends up worse is if the HRRR cell, or one like it, actually happens: at its ×1.25 bias it would be 0.68 in, just under the 0.71 in Yellow line, and a measured 0.40 in hour would trip Yellow by itself.\n\nStorm totals for the next 72 hours stay light: RRFS 0.82 in, GFS 0.71, NBM 0.64, HRRR 0.54 (its run ends Saturday morning), ECMWF 0.34."
+      "text": "Since the 1:20 PM discussion, the new HRRR (2 PM run) dropped the strong cell it had at 4 to 6 AM Friday. Its hourly rain is now dry here except 0.016 in in the hour ending 4 AM Friday, so its wettest 3 hours fell from 0.54 in to 0.02 in. Its 15-minute output still shows a brief shower around 3:15 to 3:45 AM Friday (about 0.11 in) and another small one near 6:30 AM, about 0.13 in in its wettest 3 hours, which is still light. GFS no longer copies the HRRR cell and is down to 0.06 in.\n\nNBM eased from 0.23 to 0.12 in, wettest about 3 to 6 AM Friday with no hour above 0.06 in. ECMWF came up slightly, from 0.07 to 0.15 in, about 4 to 7 AM Friday at 0.05 in per hour. RRFS is still the 4 AM run, with 0.39 in about 6 to 9 AM Friday and no hour above 0.15 in. It is now the wettest model and the oldest, so I give it less weight.\n\nThe dashboard's consensus (HRRR ×1.25 = 0.03, RRFS 0.39, NBM 0.12; middle value) is 0.12 in, down from 0.39 in. That fits a fading shower pattern. The HRRR's earlier jumps, a cell at 10 PM in one run and at 5 AM in the next, now gone, show it could not pin down any single cell. A surprise cell is still possible but much less likely than this morning.\n\nStorm totals for the next 72 hours: RRFS 0.83 in, ECMWF 0.54, NBM 0.43, GFS 0.22, HRRR 0.02 (its run ends Saturday 10 AM). Most of the ECMWF and RRFS extra comes from light weekend showers."
     },
     {
       "title": "Tide and the channel",
-      "text": "The Bay continues to run about 2 ft above the predicted tide on NOAA's Bay model. Tonight's 6.2 ft high at 8:09 PM shows about 8.3 ft on the model. The low at 2:07 AM Friday (1.6 ft predicted) stays near 3.4 ft. The tide is then rising fast during the HRRR's cell, from about 5.9 ft at 5 AM to 8.7 ft at 7 AM on the model, and Friday's 7.9 ft high at 8:32 AM peaks near 9.9 ft, right on top of the RRFS and NBM shower window. Saturday's high is higher still, 8.4 ft predicted at 9:06 AM (the Bay model run ends before then).\n\nNWS extended the Coastal Flood Advisory for the Bay shoreline until 11 AM Saturday, with up to 1.8 ft of surge, and says the Bays may be upgraded to a Coastal Flood Warning as the king tides approach. High water in the Bay slows how fast the channel can drain on Friday and Saturday mornings.\n\nChannel: the gauge upstream of Caltrain fell to 0.24 ft at 10:46 AM, then rose with the midday showers to 0.76 ft at 12:58 PM, far below county Flood Monitoring (2.8 ft). At Alameda de las Pulgas it is 0.37 ft at 1 PM (Monitoring 3.18 ft)."
+      "text": "The Bay is still running about 2 ft above the predicted tide on NOAA's Bay model. Tonight's 6.2 ft high at 8:09 PM shows about 8.3 ft. The low at 2:07 AM Friday (1.6 ft predicted) stays near 3.4 ft. The tide then rises quickly through the Friday-morning showers, from about 4.5 ft at 4 AM to 8.7 ft at 7 AM on the model, and Friday's 7.9 ft high at 8:32 AM peaks near 9.9 ft. Friday evening's 6.4 ft high at 9:15 PM shows about 8.5 ft. Saturday's high is higher, 8.4 ft predicted at 9:06 AM, and Sunday's 8.8 ft at 9:42 AM; the Bay model run ends before those.\n\nThe Coastal Flood Advisory for the Bay shoreline continues until 11 AM Saturday, with up to 1.8 ft of surge, and NWS says the Bays may be upgraded to a Coastal Flood Warning as the king tides approach. High Bay water slows how fast the channel drains on these mornings, but with light rain that should not matter much.\n\nChannel: the gauge upstream of Caltrain is back down to 0.13 ft at 4:03 PM after the midday bump to 0.76 ft, far below county Flood Monitoring (2.8 ft). At Alameda de las Pulgas it is 0.27 ft at 4 PM (Monitoring 3.18 ft)."
     },
     {
       "title": "Current observations",
-      "text": "Light showers. The Caltrain rain gauge recorded 0.04 in in the 11 AM hour and 0.04 in so far in the 1 PM hour (last reading 1:06 PM), 0.08 in over the last 3 hours. Its 24-hour total is now 0.68 in, since Wednesday's heavy hours have dropped out of that window. Both channel gauges are low; the Caltrain one is creeping up with the showers."
+      "text": "Mostly a break in the showers. The Caltrain rain gauge has not recorded rain since 0.04 in in the 1 PM hour (last tip 1:06 PM); 0.08 in over the last 6 hours and 0.44 in over 24 hours. Both channel gauges are low and steady or falling."
     },
     {
       "title": "Uncertainty",
-      "text": "Low for a long soaking rain, moderate for a single strong cell. The models agree only light to moderate showers are left, but they keep moving the strongest cell around: the HRRR had it at 10 PM tonight in its 8 AM run and at 5 AM Friday in its 11 AM run, and no other model has anything like it. That kind of jumping is typical of shower cells the model cannot pin down. A thunderstorm over a few blocks can still beat every model, and the ground is wet. Friday morning stacks the odds a little: the wettest model hours, a high tide with about 2 ft of surge, and darkness. Most likely outcome: no street flooding, possibly water on the sidewalk in a downpour."
+      "text": "Low. The models now agree that only light showers are left, and the one model that showed a strong cell has dropped it. The remaining wildcard is a lone shower cell over a few blocks early Friday, when the ground is wet and the high tide with about 2 ft of surge is coming in, but even the wettest model (RRFS, 0.39 in in 3 hours) is well under the Yellow line. Most likely outcome: no street flooding."
     },
     {
       "title": "What to do",
-      "text": "• This afternoon, while it is light, clear leaves and debris from the street drain grates and yard drains.\n• No need to move cars out of the cul-de-sac on the consensus. If you'd rather not be caught by an early-morning cell, moving cars before bed is a cheap precaution.\n• Check the dashboard around 4 to 9 AM Friday; if the 1-hour burst alarm trips (0.40 in in one hour), move cars and watch the street.\n• Take timestamped photos if water reaches the sidewalk or yards.\n• Expect cold mornings Friday and Saturday.\n• Don't drive or walk through moving water."
+      "text": "• No need to move cars out of the cul-de-sac.\n• If you haven't already, clear leaves from the street drain grates and yard drains; more rain is likely next Tuesday and Wednesday with the king tides.\n• A quick look at the dashboard between 4 and 9 AM Friday is enough; if the 1-hour burst alarm trips (0.40 in in one hour), move cars and watch the street.\n• Expect cold mornings Friday and Saturday.\n• Don't drive or walk through moving water."
     }
   ],
   "sources": [
-    "Open-Meteo HRRR (11 AM Thu run) and HRRR 15-minute, RRFS (4 AM Thu run), NBM, ECMWF and GFS, snapshot fetched 1:18 PM Thu Nov 19 (fresh run started by this task)",
-    "NWS San Francisco Area Forecast Discussion 10:31 AM Thu Nov 19 (update; short and long term from 9:52 PM Wed)",
+    "Open-Meteo HRRR (2 PM Thu run) and HRRR 15-minute, RRFS (4 AM Thu run), NBM, ECMWF and GFS, snapshot fetched 4:18 PM Thu Nov 19 (fresh run started by this task)",
+    "NWS San Francisco Area Forecast Discussion 1:54 PM Thu Nov 19",
     "NWS alerts (Coastal Flood Advisory for Bayshore locations, issued 12:02 PM Thu, until 11 AM Sat)",
     "NOAA Tides & Currents 9414523 predictions + SF Bay OFS",
-    "County gauge feed (Atherton Channel upstream of Caltrain 12:58 PM and at Alameda de las Pulgas 1:00 PM; Caltrain rain gauge 1:06 PM)",
+    "County gauge feed (Atherton Channel upstream of Caltrain 4:03 PM and at Alameda de las Pulgas 4:00 PM; Caltrain rain gauge last tip 1:06 PM)",
     "Written automatically by Claude from public data — not an official forecast; follow NWS and SMC Alert."
   ]
 }
