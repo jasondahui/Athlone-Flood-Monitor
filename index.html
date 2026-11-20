@@ -249,6 +249,7 @@
         </div>
         <details class="text-xs text-slate-500"><summary class="cursor-pointer text-slate-400">Version <span id="appVersion"></span>: change history</summary>
             <ul class="list-disc pl-5 mt-1 space-y-0.5">
+                <li><b>2.48</b> (Nov 19, 2026): fix: a storm starting within about 13 hours after a library storm was treated as part of it and not logged (missed the early Nov 19 rain).</li>
                 <li><b>2.47</b> (Nov 19, 2026): storm library baseline updated for everyone: Nov 13, Nov 15 and Nov 18, 2026 added (with archived HRRR); Nov 18 labeled Garage; Dec 24, 2025 relabeled Garage +. Storms a browser logged itself are hidden once they're in the library.</li>
                 <li><b>2.46</b> (Nov 19, 2026): warning on the graph when its forecast is old or a saved copy; saved backup forecast limited to 3 h (was 12 h); status line shows which HRRR run is used; refreshes after the computer wakes from sleep.</li>
                 <li><b>2.45</b> (Nov 18, 2026): radar scale labels simplified (inches shown as ").</li>
@@ -311,7 +312,7 @@ const TZ = 'America%2FLos_Angeles';
 const GATE_DATE = '2024-11-01';          // county flap gate installed Nov 2024
 const NAVD_OFFSET = 1.18;                // NOAA 9414523: NAVD88 = MLLW − 1.18 ft
 const STREET_NAVD = 21;                  // USGS 3DEP ground elevation on Athlone Way
-const VERSION = '2.47 (Nov 19, 2026)';
+const VERSION = '2.48 (Nov 19, 2026)';
 // Text size: the page is rem-based, so one root percentage scales everything; the chart and map follow it
 const uiScale = () => (storageGet('athlone_textsize', 115)) / 100;
 function applyTextSize() {
@@ -549,7 +550,8 @@ function allStorms() {
     getAutoEvents().forEach(e => {
         // a storm this browser logged that has since been built into the library: show the library copy only,
         // carrying over this browser's own label if it hasn't labeled the library copy
-        const [a, b] = span(e), lib = list.find(s => s.kind === 'archive' && (([x, y]) => a < y && b > x)(span(s)));
+        const [a0, b0] = span(e), a = a0 + 6 * 3600000, b = Math.max(a + 3600000, b0 - 7 * 3600000);   // rainy core only
+        const lib = list.find(s => s.kind === 'archive' && (([x, y]) => a < y && b > x)(span(s)));
         if (lib) { if (labels[e.id] && labels[lib.id] == null) labels[lib.id] = labels[e.id]; return; }
         list.push({ ...e });
     });
@@ -1092,7 +1094,10 @@ async function scanForStorms(multi, fromMs, dataAt = Date.now()) {
     const events = getAutoEvents();
     let added = 0;
     for (const f of found) {
-        if (libSpans.some(([a, b]) => f.start < b && f.start + f.n * 3600000 > a)) continue;   // already in the archive set
+        // already in the library? Compare only this storm's rainy hours (not its 6 h lead-in and 7 h tail), so a new storm that
+        // starts a few hours after a library storm's tail isn't mistaken for it
+        const coreA = f.start + 6 * 3600000, coreB = Math.max(coreA + 3600000, f.start + (f.n - 7) * 3600000);
+        if (libSpans.some(([a, b]) => coreA < b && coreB > a)) continue;
         const id = 'auto-' + localIso(new Date(f.start + 6 * 3600000));
         const prev = events.find(e => e.id === id || (parseLocal(e.start).getTime() <= f.start + 6 * 3600000 && parseLocal(e.start).getTime() + e.rain.length * 3600000 >= f.start + 6 * 3600000));
         if (prev && prev.status === 'complete' && prev.tide?.some(v => v != null)) continue;
