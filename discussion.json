@@ -1,68 +1,68 @@
 {
-  "issued": "2026-11-20T16:20-08:00",
-  "next": "early Saturday morning (about 11 hours), sooner if a model brings a real burst or Tuesday's storm comes into the 72-hour window",
-  "headline": "NWS has issued a Coastal Flood Warning for the Bay shoreline from 6 AM Monday through Thursday's king tides; rain before then stays light, with no flooding burst in any model through Monday.",
+  "issued": "2026-11-21T04:25-08:00",
+  "next": "Saturday afternoon (about 11 hours), sooner if a model brings a real burst or Tuesday's storm comes into the 72-hour model window",
+  "headline": "Light rain this evening and a round of showers Sunday afternoon stay well short of flooding amounts; the Coastal Flood Warning still starts 6 AM Monday ahead of Tuesday's stronger, tropical-moisture storm.",
   "outlook": "storm",
   "summary": [
     {
       "type": "change",
-      "dir": "up",
-      "text": "New since this morning: a Coastal Flood Warning (up to 3 ft inundation near shorelines and tidal waterways) from 6 AM Monday to 4 PM Thursday. The advisory now runs until 6 AM Monday."
+      "dir": "shift",
+      "text": "RRFS and NBM now put the wettest 3 hours on Sunday afternoon (1 to 4 PM) instead of Saturday night, at 0.20 and 0.12 in. Still small: no flooding burst in sight before Tuesday."
     },
     {
       "type": "models",
-      "text": "Wettest 3 hours, next 72 h: HRRR 0.10, RRFS 0.10, GFS 0.10, NBM 0.05, ECMWF 0.05 in. Consensus about 0.10 in (0.08 this morning). All models agree it stays light."
+      "text": "Wettest 3 hours, next 72 h: RRFS 0.20, NBM 0.12, HRRR 0.10, GFS 0.10, ECMWF 0.05 in. Consensus about 0.13 in (0.10 last evening). RRFS is the wettest; all agree it stays light."
     },
     {
       "type": "risk",
       "level": "none",
-      "text": "No street flooding expected through Monday. Yellow (garage) needs about 0.71 in in 3 hours or a 0.40 in hour; the models are far below that."
+      "text": "No street flooding expected through Monday. Yellow (garage) needs about 0.71 in in 3 hours or a 0.40 in hour; the wettest single hour in any model is 0.10 in."
     },
     {
       "type": "timing",
-      "text": "Light rain Saturday evening into early Sunday, peaking around 8 PM to midnight. Scattered showers possible Sunday afternoon and evening. Monday dry. Heavier storm Tuesday into Wednesday."
+      "text": "Light rain starting around 6 PM tonight, lingering lightly to about midnight. Showers Sunday roughly 1 to 4 PM. Monday dry. Heavier storm Tuesday into Wednesday."
     },
     {
       "type": "tide",
-      "text": "Tides running about 1.5 ft above prediction. Saturday's rain falls on the rising tide toward the lower 6.6 ft evening high. Channel low: 0.24 ft at Alameda, 0.11 ft at Caltrain."
+      "text": "Tides running about 1.0 to 1.4 ft above prediction. Tonight's rain falls on the rising tide toward the 6.6 ft high at 10:19 PM; Sunday's showers fall near low tide. Channel low: 0.18 ft at Alameda."
     },
     {
       "type": "action",
-      "text": "Nothing needed tonight or Saturday. By Monday evening: clear street drain grates and yard drains, check sandbags, and plan where cars go for Tuesday."
+      "text": "Nothing needed this weekend. Use dry Monday: clear street drain grates and yard drains, check sandbags, and plan where cars go for Tuesday."
     }
   ],
   "sections": [
     {
       "title": "Synopsis",
-      "text": "This morning's shower bands have moved down the Central Coast, and tonight is cold and mostly clear (NWS San Francisco, 2:33 PM). The second system in the series brushes the Bay Area Saturday evening as a fairly progressive band, with post-frontal showers lingering Sunday; NWS expects 0.1 to 0.5 in region-wide, highest in the coastal ranges, and notes that a strong convective cell on Sunday could locally raise totals. Monday is the dry day. A stronger system arrives Tuesday morning and continues into early Wednesday, with more significant rain and wind, during the king tide cycle. That storm is still beyond the models in this snapshot, which end late Monday."
+      "text": "A cold, clear start this morning ahead of the next upper trough (NWS San Francisco, 12:59 AM and 3:38 AM). A cold front brings rain late today, with the best chance near SFO between about 9 PM and 1 AM, then northwesterly winds and post-frontal showers into Sunday; NWS Marine expects another round Sunday morning into the afternoon. Monday is a brief break and, per NWS, the best day to prepare. Tuesday's system taps tropical moisture, with moderate to heavy rain Tuesday into Wednesday and strong winds, on top of the king tides and surge; NWS says the storm door stays open into the end of November. Tuesday's storm is still just beyond this snapshot's 72-hour model window, which ends early Tuesday."
     },
     {
       "title": "What changed and model trends",
-      "text": "The main change since the 10:25 AM discussion is the coastal flood product: NWS upgraded the Bays to a Coastal Flood Warning from 6 AM Monday to 4 PM Thursday and extended the Coastal Flood Advisory to 6 AM Monday.\n\nRain guidance changed little. Wettest 3 hours / total in the next 72 hours:\n• HRRR (2 PM Fri run): 0.10 / 0.20 in through the end of its run Sunday morning, with its wettest hour (0.07 in) Saturday evening around 8 PM. The 15-minute output agrees: 0.02 in per 15 minutes for an hour Saturday evening, then again around 11 PM.\n• RRFS (4 AM Fri run): 0.10 / 0.29 in, but its wettest 3 hours come Sunday evening (5 to 8 PM), from post-frontal showers, plus some Sunday afternoon.\n• GFS 0.10 / 0.21 in, NBM 0.05 / 0.17 in, ECMWF 0.05 / 0.14 in, all Saturday night.\n\nConsensus (HRRR 0.10 × 1.25, RRFS 0.10, NBM 0.05): about 0.10 in, up slightly from 0.08 in. Even allowing for HRRR's history of under-forecasting bursts by about 3×, Saturday night would stay under 0.40 in in 3 hours. RRFS's Sunday showers are the kind of cell NWS mentions; a single strong one is the only way this weekend gets interesting, and no model shows it."
+      "text": "Since last evening's discussion, the coastal flood products are unchanged, and the rain guidance shifted rather than grew. Wettest 3 hours / total in the next 72 hours:\n• HRRR (2 AM Sat run): 0.10 / 0.17 in, wettest 3 hours this evening around 5 to 8 PM, with its wettest hour 0.07 in. Its run ends Sunday evening. The 15-minute output shows 0.02 in in the first 15 minutes around 6 PM, then a steady 0.01 in or less per 15 minutes to about midnight.\n• RRFS (10 PM Fri run): 0.20 / 0.23 in, all of it Sunday afternoon, wettest 3 hours about 1 to 4 PM with a 0.10 in hour. Last evening it had 0.10 in on Sunday evening; the shower round is now a bit stronger and about 4 hours earlier.\n• NBM: 0.12 / 0.15 in, also Sunday 1 to 4 PM (last evening 0.05 in, Saturday night).\n• GFS 0.10 / 0.17 in, Saturday evening, matching HRRR hour for hour. ECMWF 0.05 / 0.10 in, spread lightly over Saturday evening and night.\n\nConsensus (HRRR 0.10 × 1.25 = 0.13, RRFS 0.20, NBM 0.12): about 0.13 in, up from 0.10 in. Even with HRRR's history of under-forecasting bursts by about 3×, tonight would stay near 0.30 in in 3 hours, under the 0.71 in Yellow threshold. Sunday's RRFS cell is the kind of convective shower NWS has flagged; it is supported by NBM, so it is a real signal, but its 0.10 in hour is a quarter of the 0.40 in that would matter."
     },
     {
       "title": "Tide and the channel",
-      "text": "NOAA's Bay model keeps running about 1.5 ft above the predicted tides. Tonight's 6.4 ft high at 9:15 PM runs about 8.1 ft. Saturday's 8.4 ft high at 9:06 AM runs about 9.9 ft, before the rain. Saturday's rain arrives after the 0.3 ft low at 4:05 PM (about 1.5 ft on the model) and falls on the rising tide toward the 6.6 ft high at 10:19 PM (about 8.2 ft), so drainage slows somewhat late in the evening, but the amounts are small. The model run ends 7 AM Sunday, so Sunday's 8.8 ft high at 9:42 AM and Monday's 9.2 ft high at 10:20 AM are not covered yet.\n\nThe Coastal Flood Warning describes high tides at San Francisco running 2.1 ft above normal Sunday, 2.3 ft Monday, 2.9 ft Tuesday and 3.0 ft Wednesday, including up to 1.8 ft of surge, with up to 3 ft of inundation in low-lying areas near shorelines and tidal waterways. For the street, the concern is mostly the overlap with Tuesday and Wednesday rain: high tides with surge slow the channel's drainage.\n\nChannel: at Alameda de las Pulgas it reads 0.24 ft at 3 PM (Flood Monitoring 3.18 ft). Upstream of Caltrain the last reading in the feed is 0.11 ft at 11:50 AM (Flood Monitoring 2.8 ft); that reading is about four hours old."
+      "text": "NOAA's Bay model runs about 1.0 to 1.4 ft above the predicted tides at Redwood City, a little less than yesterday's 1.5 ft. This morning's 8.4 ft high at 9:06 AM runs about 9.7 ft. Tonight's rain falls on the rising tide toward the 6.6 ft high at 10:19 PM (about 8.1 ft on the model around 11 PM), so drainage slows late in the evening, but the amounts are small. Sunday's 8.8 ft high at 9:42 AM runs about 10.2 ft, before the showers; the afternoon showers then fall on the falling tide toward the -0.4 ft low at 4:53 PM (about 0.7 ft on the model), good timing for drainage. The model run ends 7 PM Sunday, so Monday's 9.2 ft high at 10:20 AM and Tuesday's 9.5 ft high at 11:02 AM are not covered yet.\n\nThe Coastal Flood Advisory runs until 6 AM Monday, then the Coastal Flood Warning (up to 3 ft of inundation in low-lying areas near shorelines and tidal waterways) through 4 PM Thursday. NWS expects San Francisco high tides 2.9 ft above normal Tuesday and 3.0 ft Wednesday, including up to 1.8 ft of surge. Tuesday's and Wednesday's late-morning highs are the overlap to watch: high tides with surge slow the channel's drainage.\n\nChannel: at Alameda de las Pulgas it reads 0.18 ft at 4 AM, flat overnight (Flood Monitoring 3.18 ft). The gauge upstream of Caltrain has not reported since 5:13 PM Friday (0.07 ft then; Flood Monitoring 2.8 ft), so it is about 11 hours stale."
     },
     {
       "title": "Current observations",
-      "text": "Dry since this morning. The Caltrain rain gauge's last tip was at 7:45 AM: nothing in the last 6 hours and 0.20 in over 24 hours. Both channel gauges are low and steady."
+      "text": "Dry overnight. The Caltrain rain gauge has not reported since 5:13 PM Friday (0.12 in over the 24 hours before that), so there is no current local rain reading. The Alameda channel gauge is low and steady."
     },
     {
       "title": "Uncertainty",
-      "text": "Low for this weekend: all five models keep the wettest 3 hours at 0.10 in or less. The main uncertainty is a stray convective shower Sunday, which RRFS hints at. Tuesday's storm is not yet in this snapshot's models, so its timing and intensity, and how it lines up with the late-morning king tides, will come in the next discussions."
+      "text": "Low for the weekend: all five models keep the wettest 3 hours at 0.20 in or less and no hour above 0.10 in. The main question is how strong Sunday afternoon's showers get, with RRFS and NBM agreeing on timing. Tuesday's storm is the real concern, but it is not yet in this snapshot's models, so its timing, intensity and overlap with the late-morning king tides will come in the next discussions."
     },
     {
       "title": "What to do",
-      "text": "• No need to move cars this weekend.\n• Before Tuesday (Monday is the dry day NWS recommends for this): clear leaves from street drain grates and yard drains, check sandbags, and decide where cars will go if Tuesday's rain lands near a high tide.\n• Stay away from the Bay shore and tidal sloughs at the morning high tides; don't walk or drive through moving water."
+      "text": "• No need to move cars this weekend.\n• Monday (dry, before the warning-level tides and Tuesday's rain): clear leaves from street drain grates and yard drains, check sandbags, and decide where cars will go if Tuesday's rain lands near a high tide. Power outages from Tuesday's wind can slow the pumps.\n• Stay away from the Bay shore and tidal sloughs at the morning high tides; don't walk or drive through moving water."
     }
   ],
   "sources": [
-    "Snapshot fetched 4:04 PM Fri Nov 20 (about 15 minutes before this discussion): Open-Meteo HRRR (2 PM Fri run) and HRRR 15-minute, RRFS (4 AM Fri run), NBM, ECMWF and GFS",
-    "NWS San Francisco Area Forecast Discussion 2:33 PM Fri Nov 20",
+    "Snapshot fetched 4:18 AM Sat Nov 21 (a few minutes before this discussion, from a manually started run): Open-Meteo HRRR (2 AM Sat run) and HRRR 15-minute, RRFS (10 PM Fri run), NBM, ECMWF and GFS",
+    "NWS San Francisco Area Forecast Discussion 3:38 AM Sat Nov 21 (short and long term from 12:59 AM)",
     "NWS alerts: Coastal Flood Warning (6 AM Mon to 4 PM Thu) and Coastal Flood Advisory (until 6 AM Mon), both issued 2:52 PM Fri",
-    "NOAA Tides & Currents 9414523 predictions + SF Bay OFS (run ends 7 AM Sun)",
-    "County gauge feed read 3:55 PM (Atherton Channel at Alameda de las Pulgas 3:00 PM; upstream of Caltrain 11:50 AM; Caltrain rain gauge last tip 7:45 AM)",
+    "NOAA Tides & Currents 9414523 predictions + SF Bay OFS (run ends 7 PM Sun)",
+    "County gauge feed read 4:05 AM (Atherton Channel at Alameda de las Pulgas 4:00 AM; upstream of Caltrain and Caltrain rain gauge last reported 5:13 PM Fri)",
     "Written automatically by Claude from public data — not an official forecast; follow NWS and SMC Alert."
   ]
 }
