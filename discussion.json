@@ -1,68 +1,69 @@
 {
-  "issued": "2026-11-24T07:25-08:00",
-  "next": "This evening, sooner if any model brings in a burst near 0.25 in for tonight or NWS issues a rain or wind product for the Peninsula",
-  "headline": "The models still bring only light rain tonight into early Wednesday (wettest 3 hours 0.06 to 0.12 in), so the rating card stays at none; the near-record late-morning king tides and gusty winds remain the bigger story.",
+  "issued": "2026-11-24T13:20-08:00",
+  "next": "Around midnight tonight, sooner if HRRR or RRFS push the overnight burst toward 0.5 in in 3 hours or NWS issues a flood product for the Peninsula",
+  "headline": "The midday models roughly doubled tonight's rain, with HRRR and ECMWF now near 0.27 in in the wettest 3 hours centered on the 1 AM high tide; the rating card is still none, but a heavier shower could briefly flood gutters and low spots.",
   "outlook": "storm",
   "summary": [
     {
       "type": "change",
       "dir": "up",
-      "text": "Small nudge up, still light: HRRR 0.03 to 0.12 in and RRFS 0.02 to 0.07 in for the wettest 3 hours; NBM eased to 0.06 in. Consensus 0.035 to 0.07 in."
+      "text": "Up since this morning: HRRR 0.12 to 0.27 in, RRFS 0.07 to 0.15 in, ECMWF 0.12 to 0.27 in for the wettest 3 hours. HRRR's peak hour jumped from 0.09 to 0.24 in."
     },
     {
       "type": "models",
-      "text": "Wettest 3 hours: ECMWF 0.12 in, HRRR 0.12 (GFS copies it), RRFS 0.07, NBM 0.06. Storm totals 0.06 to 0.23 in. Good agreement on a quick, light frontal rain."
+      "text": "Wettest 3 hours: ECMWF 0.27, HRRR 0.27 (GFS copies it), RRFS 0.15, NBM 0.07 in. Storm totals 0.09 to 0.37 in. NBM is the low outlier; all agree on one quick overnight band."
     },
     {
       "type": "risk",
-      "level": "none",
-      "text": "Rating card consensus 0.07 in: no street flooding expected. Yellow (garage) needs about 0.71 in in 3 hours or a 0.40 in hour; the wettest model hour is 0.09 in."
+      "level": "sidewalk",
+      "level_low": "none",
+      "text": "Rating card consensus 0.15 in: none. Likely too low given HRRR's under-forecast history; a heavier cell could reach sidewalk level. Yellow (garage) needs about 0.71 in in 3 hours or a 0.40 in hour."
     },
     {
       "type": "timing",
-      "text": "Dry today. Light rain from this evening, heaviest roughly midnight to 5 AM Wednesday as the front passes, done by late morning. Thanksgiving and Friday dry; rain returns Sunday."
+      "text": "Light rain from about 10 to 11 PM, heaviest roughly 1 to 3 AM Wednesday, showers ending by mid-morning. Thanksgiving and Friday dry; light rain possible Sunday, wetter around next Tuesday."
     },
     {
       "type": "tide",
-      "text": "The heaviest rain overlaps the 7.1 ft high at 1:12 AM, running about 8.5 ft with surge, so the channel drains slowly until about 4 AM. Channel low: 0.13 ft at 7 AM."
+      "text": "The burst lands on the 7.1 ft high at 1:12 AM, running about 8.5 ft with surge, so the channel drains slowly until about 3 to 4 AM. Channel low: 0.13 ft at 1 PM."
     },
     {
       "type": "action",
-      "text": "Before this evening: clear street drain grates and yard drains. Tonight: gusts near 40 mph can cut power to the pumps. Stay off the Bay shore at late-morning high tides."
+      "text": "Before dark: clear street drain grates and yard drains. If a downpour hits around 1 to 3 AM, move cars out of the cul-de-sac. Stay off the Bay shore at the late-morning king tides."
     }
   ],
   "sections": [
     {
       "title": "Synopsis",
-      "text": "Dry today with high clouds thickening and southeast winds increasing ahead of a cold front. NWS San Francisco (discussion issued 3:43 AM, short term updated 1:27 AM) has the front moving through faster than earlier thought, crossing the Bay Area after midnight and the Central Coast before 6 AM, with most rain done by late morning Wednesday. They call it a slightly improved forecast for impacts. Most places see gusts to about 40 mph with the front, 50 mph or more in gaps and passes. Thunderstorm chances are down to about 10 to 15 percent for the North Bay and Bay Area; a thunderstorm would raise rain rates locally, otherwise the rain should be steady and manageable. This NWS discussion gives no Peninsula rain total (yesterday's issue had 0.5 to 1 in). Thanksgiving and Friday dry and mild; more rain likely Sunday, with a stronger system the middle of next week. The Coastal Flood Warning for the San Francisco and San Pablo Bay shorelines runs until 4 PM Thursday."
+      "text": "A cold front is moving into the region from the northwest: clouds are increasing and showers were developing on the Sonoma coast early this afternoon. NWS San Francisco (short and long term issued 12:00 PM) has the main front crossing tonight, with south gusts of 25 to 35 mph for coastal and bay shore areas this evening (down from about 40 mph in the morning discussion) and most of the rain overnight. The band weakens as it moves south, breaking into scattered showers by the Wednesday commute and ending by afternoon. NWS rain totals: 0.25 to 0.50 in for San Francisco and the bay shore, 0.5 to 0.75 in on the Peninsula's coastal slopes, under 0.25 in for the South Bay. Weak instability over the coastal waters gives a 15 percent chance of a few heavier showers or a thunderstorm north of Santa Cruz; NWS notes that both HRRR and RRFS show localized rates over 0.50 in per hour, with HRRR hinting at a shower near 1 in per hour, and that heavier downpours could cause localized flooding. Thanksgiving and Friday dry and near average; light rain likely Sunday, with a stronger trough possible around next Tuesday. The Coastal Flood Warning for the San Francisco and San Pablo Bay shorelines continues until 4 PM Thursday."
     },
     {
       "title": "What changed and model trends",
-      "text": "Since last evening's discussion the models have moved slightly closer together around a light, quick frontal rain. HRRR and RRFS came up a little, NBM came down, and nothing approaches a burst.\n\nWettest 3 hours / storm total, 7 AM Tuesday to 7 AM Friday:\n• HRRR (5 AM Tue run, out to 4 AM Thu): 0.12 / 0.12 in, all of it about 3 to 5 AM Wednesday, with a peak hour of 0.09 in (4 to 5 AM). Up from 0.03 / 0.04 in.\n• HRRR 15-minute (ends midnight Wednesday night): 0.008 in per 15 minutes 3 to 4 AM, then 0.024 in per 15 minutes 4 to 5 AM Wednesday, then dry.\n• RRFS (10 PM Mon run): 0.07 / 0.07 in, about midnight to 2 AM Wednesday. Up from 0.02 / 0.02 in.\n• NBM: 0.06 / 0.06 in, about midnight to 3 AM Wednesday. Down from 0.13 / 0.21 in.\n• ECMWF: 0.12 / 0.23 in, the wettest and longest: about 0.01 in per hour from 7 PM tonight, then 0.03 to 0.04 in per hour 10 PM to 4 AM. Up slightly from 0.08 / 0.17 in.\n• GFS: again identical to HRRR hour for hour, so no independent information.\n\nConsensus (HRRR 0.12 × 1.25 = 0.14, RRFS 0.07, NBM 0.06): middle value 0.07 in, up from 0.035 in, so the rating card stays at none. HRRR has under-forecast big local bursts here by about 3×, but even three times its 3-hour amount (about 0.35 in) stays well below the 0.71 in Yellow threshold, and its wettest hour would have to more than quadruple to reach the 0.40 in one-hour trigger."
+      "text": "Since this morning's discussion every model except NBM has come up, and the rain is now concentrated earlier, around 1 to 3 AM instead of 3 to 5 AM in HRRR. Two models (HRRR and ECMWF) now cross 0.25 in in 3 hours, which puts tonight on the storm horizon even though it stays far below the flooding thresholds.\n\nWettest 3 hours / storm total, 1 PM Tuesday onward (72 hours):\n• HRRR (11 AM Tue run, out to 10 AM Thu): 0.27 / 0.32 in, about 0.02 in per hour from 10 PM, then 0.24 in in the hour around 2 AM, a small shower near 6 AM. Up from 0.12 / 0.12 in; peak hour up from 0.09 in.\n• HRRR 15-minute (ends 11:45 PM Wednesday): sprinkles from about 10 PM, then 0.059 and 0.075 in in back-to-back 15 minutes around 2 AM (a rate near 0.3 in per hour), light showers again 5 to 6 AM.\n• RRFS (4 AM Tue run): 0.15 / 0.15 in, almost all of it (0.12 in) in the hour around 2 AM. Up from 0.07 / 0.07 in.\n• NBM: 0.07 / 0.09 in, about 1 to 5 AM. Little changed from 0.06 / 0.06 in.\n• ECMWF: 0.27 / 0.37 in, the wettest total: about 0.02 in per hour from 10 PM, then 0.09 in per hour for three hours around 1 to 4 AM, a few hundredths into Wednesday midday. Up from 0.12 / 0.23 in.\n• GFS: identical to HRRR hour for hour again, so no independent information.\n\nThe 2 AM burst in HRRR is supported by RRFS (same hour) and ECMWF (same window), so it is not an isolated shower cell.\n\nConsensus (HRRR 0.27 × 1.25 = 0.34, RRFS 0.15, NBM 0.07): middle value 0.15 in, up from 0.07 in. The rating card stays at none. I think that is on the low side tonight: HRRR has under-forecast big local bursts here by about 3×, and three times its 3-hour amount (about 0.8 in) or its peak hour (about 0.7 in) would reach Yellow. That is the worst case, not the expected case; the most likely outcome is a quarter inch or so with gutters running full for an hour."
     },
     {
       "title": "Tide and the channel",
-      "text": "NOAA's Bay model (now running to 1 AM Thursday) is about 1.3 to 1.4 ft above the predicted high tides at Redwood City and about 1.0 to 1.7 ft above the lows. This morning's 9.5 ft king tide at 11:02 AM runs about 10.9 ft. This evening's -1.5 ft low at 6:28 PM runs about -0.4 to 0.2 ft, an easy time for the channel to drain before the rain.\n\nThe heaviest rain overlaps the 7.1 ft high at 1:12 AM Wednesday: the model has 7.2 ft at midnight, 8.3 ft at 1 AM, 8.5 ft at 2 AM, 7.7 ft at 3 AM, 6.4 ft at 4 AM and 5.2 ft at 5 AM. RRFS and NBM put their rain right on top of that high, so the channel drains slowly then; HRRR's rain comes 3 to 5 AM on a falling tide. At rates under 0.1 in per hour this should not matter on the street. Wednesday's 9.5 ft king tide at 11:46 AM runs about 10.9 ft, after the rain has ended.\n\nNWS: at the San Francisco gauge, highs 2.4 ft above normal this morning, 2.7 ft Wednesday, 2.2 ft Thursday and 2.0 ft Friday and Saturday, including up to 1.6 ft of surge, approaching the highest tide ever recorded there.\n\nChannel: at Alameda de las Pulgas 0.13 ft at 7 AM, flat between 0.12 and 0.15 ft for 24 hours (Flood Monitoring 3.18 ft). Upstream of Caltrain: 0.07 ft at 5:13 AM, its latest report (Flood Monitoring 2.8 ft)."
+      "text": "NOAA's Bay model (run now ends 7 AM Thursday) runs about 1.1 to 1.4 ft above the predicted tides at Redwood City. This evening's -1.5 ft low at 6:28 PM runs about -0.3 ft near 7:20 PM, a good window for the channel to drain before the rain.\n\nThe heaviest rain now lands right on the 7.1 ft high at 1:12 AM Wednesday: the model has 7.3 ft at midnight, 8.3 ft at 1 AM, a crest near 8.5 ft at 1:30 AM, 8.5 ft at 2 AM, 7.7 ft at 3 AM and 6.5 ft at 4 AM. All four independent models put their wettest hour within that high, so the channel and the street drains empty slowly during the burst and drain better after about 3 to 4 AM. The 3.2 ft low at 6:14 AM runs about 4.3 ft. Wednesday's 9.5 ft king tide at 11:46 AM runs about 11.0 ft near noon, after the rain has ended. (This morning's 9.5 ft king tide ran about 10.9 ft.)\n\nNWS: at the San Francisco gauge, highs 2.7 ft above normal Wednesday (8.5 ft at 10:49 AM), 2.2 ft Thursday and 2.0 ft Friday and Saturday, including up to 1.6 ft of surge, approaching the highest tide ever recorded there.\n\nChannel: at Alameda de las Pulgas 0.13 ft at 1 PM, flat between 0.12 and 0.15 ft for 24 hours (Flood Monitoring 3.18 ft). Upstream of Caltrain: 0.07 ft at 5:13 AM, still its latest report (Flood Monitoring 2.8 ft)."
     },
     {
       "title": "Current observations",
-      "text": "Dry on the street. The Caltrain rain gauge recorded no rain in the 24 hours to 5:13 AM. NWS reports patchy fog and low clouds early with high clouds streaming in from the west; clouds lower and winds pick up as the front approaches this evening."
+      "text": "Dry on the street, with clouds thickening and south winds increasing. The Caltrain rain gauge has not reported since 5:13 AM (no rain in the 24 hours to then). NWS satellite shows a 200 to 300 mile cloud field with the front, and showers starting along the Sonoma coast."
     },
     {
       "title": "Uncertainty",
-      "text": "Low for today: dry. For tonight into Wednesday morning the models agree on light rain, all wettest 3-hour amounts between 0.06 and 0.12 in, which keeps street-flooding risk low. The remaining wildcard is a thunderstorm along the front (NWS 10 to 15 percent), which could briefly exceed every model. Timing differs by a few hours: RRFS and NBM center the rain on the 1:12 AM high tide, HRRR a few hours later. The more certain hazards are tidal flooding along the Bay shore at the late-morning high tides through Thursday and gusts tonight."
+      "text": "Moderate. The models agree well on timing (one band, heaviest around 1 to 3 AM) and on a storm total under 0.4 in, but differ by about 4× on the burst (NBM 0.07 in vs HRRR and ECMWF 0.27 in for 3 hours). The front is forecast to weaken as it reaches the South Bay, which favors the lower numbers; the convective showers NWS mentions favor the higher ones, and a single heavy shower overhead could briefly exceed every model. The burst coinciding with the 1 AM high tide is the main aggravating factor for the channel. RRFS is from an older 4 AM run; the next RRFS and HRRR runs will show whether the burst holds."
     },
     {
       "title": "What to do",
-      "text": "• Today before evening: clear leaves from street drain grates and yard drains; secure loose items ahead of the wind.\n• Tonight through early Wednesday: gusts near 40 mph; outages can slow the pumps.\n• No need to move cars on current guidance; if a heavy downpour or thunderstorm does develop overnight, move them out of the cul-de-sac and take timestamped photos.\n• NWS advice for holiday travel: wait until Wednesday afternoon if you can.\n• Stay away from the Bay shore, tidal sloughs and low shoreline roads at the late-morning high tides through Thursday; don't walk or drive through moving water."
+      "text": "• Before dark today: clear leaves from street drain grates and yard drains; secure loose items for the evening wind.\n• Tonight: no need to move cars on current guidance, but if rain turns heavy around 1 to 3 AM, move them out of the cul-de-sac and take timestamped photos of the street at the peak.\n• Gusts of 25 to 35 mph this evening can still cause outages that slow the pumps.\n• Keep this page open overnight if you're up; check the next update around midnight.\n• Stay away from the Bay shore, tidal sloughs and low shoreline roads at the late-morning king tides Wednesday and Thursday; don't walk or drive through moving water."
     }
   ],
   "sources": [
-    "Snapshot fetched 7:18 AM Tue Nov 24 (manually started run; the scheduled snapshot was 3 hours old): Open-Meteo HRRR (5 AM Tue run, to 4 AM Thu) and HRRR 15-minute (ends midnight Wed night), RRFS (10 PM Mon run), NBM, ECMWF and GFS",
-    "NWS San Francisco Area Forecast Discussion 3:43 AM Tue Nov 24 (short and long term from 1:27 AM)",
+    "Snapshot fetched 1:18 PM Tue Nov 24 (manually started run; the scheduled snapshot was 3 hours old): Open-Meteo HRRR (11 AM Tue run, to 10 AM Thu) and HRRR 15-minute (ends 11:45 PM Wed), RRFS (4 AM Tue run), NBM, ECMWF and GFS",
+    "NWS San Francisco Area Forecast Discussion 12:09 PM Tue Nov 24 (short and long term 12:00 PM; key messages 1:27 AM; beaches 3:35 AM)",
     "NWS alerts: Coastal Flood Warning (issued 1:10 PM Mon, until 4 PM Thu)",
-    "NOAA Tides & Currents 9414523 predictions + SF Bay OFS (run ends 1 AM Thu)",
-    "County gauge feed read 7:05 AM (Atherton Channel at Alameda de las Pulgas 7:00 AM; upstream of Caltrain stage and rain gauge 5:13 AM)",
+    "NOAA Tides & Currents 9414523 predictions + SF Bay OFS (run ends 7 AM Thu)",
+    "County gauge feed read 1:10 PM (Atherton Channel at Alameda de las Pulgas 1:00 PM; upstream of Caltrain stage and rain gauge 5:13 AM)",
     "Written automatically by Claude from public data — not an official forecast; follow NWS and SMC Alert."
   ]
 }
