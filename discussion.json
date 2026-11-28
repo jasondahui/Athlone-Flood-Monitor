@@ -1,60 +1,64 @@
 {
-  "issued": "2026-11-27T19:25-08:00",
-  "next": "When a storm returns to the 72-hour window (any model at 0.25 in or more in 3 hours) or NWS issues a rain, flood or wind product for the Peninsula",
-  "headline": "Sunday's front has trended weaker: RRFS dropped its 0.36 in burst to 0.08 in and HRRR now shows almost nothing through Sunday afternoon, so expect a light soaking with no street flooding; channel at base flow.",
-  "outlook": "quiet",
+  "issued": "2026-11-28T01:20-08:00",
+  "next": "Saturday around midday, or sooner if a second model picks up a heavy Sunday burst or NWS issues a rain or flood product for the Peninsula",
+  "headline": "The new HRRR run shows one isolated downpour near 0.40 in around 12 to 1 PM Sunday, but no other independent model supports it; expect a steady light-to-moderate soaking Sunday with street flooding unlikely, channel at base flow.",
+  "outlook": "storm",
   "summary": [
     {
       "type": "change",
-      "dir": "down",
-      "text": "RRFS wettest 3 hours fell from 0.36 to 0.08 in; HRRR, now reaching 4 PM Sunday, shows 0.02 in. No model reaches 0.25 in, so this is no longer a storm watch for the street."
+      "dir": "up",
+      "text": "HRRR wettest 3 hours jumped from 0.02 to 0.40 in, all in one hour (12 to 1 PM Sunday). Other models barely moved, so treat it as a possible shower cell, not a trend."
     },
     {
       "type": "models",
-      "text": "Wettest 3 hours: ECMWF 0.24, GFS 0.14, RRFS 0.08, NBM 0.04, HRRR 0.02 in. ECMWF is the wettest; storm totals 0.03 to 0.52 in."
+      "text": "Wettest 3 hours: HRRR 0.40, GFS 0.40 (tracks HRRR hour for hour), RRFS 0.10, ECMWF 0.09, NBM 0.06 in. HRRR is the outlier; storm totals 0.28 to 0.55 in."
     },
     {
       "type": "risk",
       "level": "none",
-      "text": "Rating card consensus about 0.04 in (middle of HRRR 0.02 x 1.25, NBM 0.04, RRFS 0.08): none. Even ECMWF is a third of the 0.71 in Yellow (garage) line."
+      "text": "Rating card consensus about 0.10 in (middle of HRRR 0.40 x 1.25 = 0.50, RRFS 0.10, NBM 0.06): none. Water in the street would need the HRRR cell to verify and stall overhead."
     },
     {
       "type": "timing",
-      "text": "Dry through Saturday night. Light rain Sunday, heaviest somewhere between about 2 PM and 11 PM depending on the model; showers linger into Monday."
+      "text": "Dry Saturday. Light rain from about 7 AM Sunday; possible HRRR downpour 12:15 to 1 PM; broader models peak 1 to 7 PM Sunday. A brief shower around midnight, then light rain Monday."
     },
     {
       "type": "tide",
-      "text": "Sunday's 7.9 ft high at 3:33 PM may overlap the ECMWF peak; surge has run 1.2 to 1.4 ft on highs. Channel at Alameda 0.12 ft, far below Monitoring 3.18 ft."
+      "text": "Sunday's 7.9 ft high at 3:33 PM is modeled near 9.4 ft (about 1.6 ft surge) and overlaps the afternoon rain. Channel at Alameda 0.12 ft, far below Monitoring 3.18 ft."
     },
     {
       "type": "action",
-      "text": "Clearing leaves from street drain grates and yard drains Saturday is still worthwhile. No need to move cars. Avoid the Bay shore at midday high tides through Sunday."
+      "text": "Clear leaves from street drain grates and yard drains Saturday. No need to move cars. If a heavy cell hits around noon Sunday, snap timestamped photos of the street."
     }
   ],
   "sections": [
     {
       "title": "Synopsis",
-      "text": "High pressure keeps Saturday dry and mild. A cold front brings rain Sunday, steadier late Sunday afternoon into Sunday night, with gusts of 25 to 35 mph and showers lingering into Monday. NWS San Francisco (long term issued 12:52 PM Friday) expects up to 0.25 in for most of the Bay Area outside the North Bay and the mountains, and calls the rain largely beneficial. The Tuesday system continues to track toward Southern California; NWS now expects only 0.01 to 0.1 in for most of the Bay Area, and it is beyond this 72-hour window."
+      "text": "Upper-level ridging keeps Saturday dry and warm; NWS forecasts Redwood City near 71, a degree short of the date's record. A low tracking along the Northern California coast clips the Bay Area Sunday into Monday. NWS San Francisco (12:22 AM Saturday) raised rain totals from yesterday: 0.25 to 0.5 in for most of the Bay Area outside the North Bay and mountains, which it calls beneficial with only nuisance ponding on roads and in low spots. Gusts of 25 to 35 mph Sunday. NWS also mentions the potential for isolated thunderstorms outside the North Bay Sunday afternoon, with lower confidence than in the North Bay. Another system Tuesday into early Wednesday is expected to bring up to 0.25 in to most of the Bay Area; it is just beyond this 72-hour window."
     },
     {
       "title": "Model trends",
-      "text": "From 7 PM Friday to 7 PM Monday, wettest 3 hours / storm total:\n• ECMWF: 0.24 / 0.52 in, about 2 to 5 PM Sunday (up from 0.11 / 0.31 in this afternoon).\n• GFS: 0.14 / 0.23 in, about 6 to 9 PM Sunday.\n• RRFS (10 AM run): 0.08 / 0.14 in, about 3 to 6 PM Sunday (down from 0.36 / 0.57 in).\n• NBM: 0.04 / 0.20 in, light and spread out, about 8 to 11 PM Sunday.\n• HRRR (5 PM run, ends 4 PM Sunday): 0.02 / 0.03 in.\n• HRRR 15-minute (through 11:45 PM Saturday): 0.00 in.\n\nThe banded RRFS scenario that prompted this afternoon's discussion has gone away, and HRRR now covers the start of the event with almost no rain. ECMWF moved the other way and is the wettest model, but its biggest hour is 0.08 in, far from the 0.40 in one-hour Yellow trigger. Even allowing for HRRR's history of under-forecasting local bursts, nothing here points to water in the street."
+      "text": "From 1 AM Saturday to 1 AM Tuesday, wettest 3 hours / storm total (changes since 7:25 PM Friday):\n• HRRR (11 PM run, ends 10 PM Sunday): 0.40 / 0.47 in, nearly all in 12 to 1 PM Sunday (up from 0.02 / 0.03 in). The 15-minute HRRR puts about 0.10 in in each quarter hour from 12:15 to 1 PM, with zeros before and after.\n• GFS: 0.40 / 0.55 in, the same 0.40 in hour as HRRR, matching it nearly hour for hour through Sunday evening, so it is not independent support (up from 0.14 / 0.23 in).\n• RRFS (4 PM run): 0.10 / 0.28 in, about 3 to 6 PM Sunday, plus a 0.06 in hour around midnight (up slightly from 0.08 / 0.14 in).\n• ECMWF: 0.09 / 0.32 in, about 1 to 4 PM Sunday (down from 0.24 / 0.52 in).\n• NBM: 0.06 / 0.30 in, light and steady, about 4 to 7 PM Sunday (up slightly from 0.04 / 0.20 in).\n\nThe HRRR spike is a single isolated hour with dry hours on both sides, and none of RRFS, ECMWF or NBM shows anything above 0.06 in in any hour. That pattern looks like a convective shower cell that HRRR happened to place over the street, which fits the NWS mention of isolated afternoon thunderstorms but is a low-confidence detail. It sits just under the 0.40 in one-hour Yellow trigger. HRRR has under-forecast big local bursts before, so a cell like this can't be ruled out, but where it lands is close to a coin toss at this range. The broader picture is a steadier, beneficial soaking of roughly a third to a half inch."
     },
     {
       "title": "Tide and the channel",
-      "text": "NOAA's Bay model (run ends 1 PM Sunday) keeps Redwood City highs 1.2 to 1.4 ft above predictions: Saturday 8.6 ft at 2:27 PM modeled near 9.8 ft, Sunday 7.2 ft at 4:49 AM modeled near 8.6 ft. Sunday's 7.9 ft high at 3:33 PM is beyond the model run. The NWS Coastal Flood Advisory (2:53 PM Friday) for Bayshore locations runs until 5 PM Sunday; it affects the shoreline and tidal sloughs, not Athlone Terrace directly.\n\nChannel at Alameda de las Pulgas: 0.12 ft at 6 PM, flat between 0.10 and 0.13 ft for the past day (Monitoring 3.18 ft). Upstream of Caltrain: 0.07 ft at 5:13 PM (Monitoring 2.8 ft), with no rain at its gauge in the past 24 hours."
+      "text": "NOAA's Bay model (run ends 7 PM Sunday) has Redwood City highs running 1.4 to 1.6 ft above predictions: Saturday 8.6 ft at 2:27 PM modeled near 10.0 ft, Sunday 7.2 ft at 4:49 AM modeled near 8.8 ft, and Sunday 7.9 ft at 3:33 PM modeled near 9.4 ft. That Sunday afternoon high overlaps the ECMWF and RRFS peaks, and the possible HRRR cell falls on the rising tide a couple of hours before it, which would slow channel drainage if heavy rain did hit. The NWS Coastal Flood Advisory for Bayshore locations runs until 5 PM Sunday; NWS lists moderate coastal flooding into the weekend as a key message. It affects the shoreline and tidal sloughs, not Athlone Terrace directly.\n\nChannel at Alameda de las Pulgas: 0.12 ft at 1 AM, flat between 0.10 and 0.13 ft for the past day (Monitoring 3.18 ft). Upstream of Caltrain: no reading since 5:13 PM Friday, when it was 0.07 ft (Monitoring 2.8 ft) with no rain at its gauge in the previous 24 hours."
+    },
+    {
+      "title": "Uncertainty",
+      "text": "The main question is whether Sunday brings any short, heavy convective cell to the mid-Peninsula. Only HRRR (and the GFS blend, which tracks it) shows one, so confidence is low. If the next HRRR runs keep a 0.3 in-plus hour near the street, or RRFS picks one up, the rating could move toward sidewalk or yard ponding for an hour, especially if it coincides with the surge-boosted afternoon tide. If the cell disappears, Sunday is a routine soaking."
     },
     {
       "title": "What to do",
-      "text": "• Nothing urgent for the street. Saturday is a good day to clear leaves from drain grates before the season's next rounds.\n• Stay off the Bay shore and low shoreline paths around the midday high tides through Sunday, and drive carefully on wet roads Sunday evening.\n• This page will switch back to a storm discussion if the models bring a heavier burst back into the next 72 hours."
+      "text": "• Saturday is the day to clear leaves from street drain grates and yard drains before Sunday's rain.\n• No need to move cars out of the cul-de-sac for this one.\n• Around noon to 2 PM Sunday, if a heavy downpour does hit, take timestamped photos of the street and the grates; don't walk or drive through moving water.\n• Stay off the Bay shore and low shoreline paths around the midday high tides through Sunday.\n• This page will update by midday Saturday, sooner if the burst strengthens or shows up in more models."
     }
   ],
   "sources": [
-    "Snapshot fetched 6:50 PM Fri Nov 27 (about 35 minutes old when written): HRRR (5 PM run, ends 4 PM Sun), RRFS (10 AM run), NBM, ECMWF and GFS via Open-Meteo, HRRR 15-minute (ends 11:45 PM Sat)",
-    "NWS San Francisco Area Forecast Discussion 3:12 PM Fri Nov 27 (short and long term 12:52 PM)",
+    "Snapshot fetched 1:18 AM Sat Nov 28 (a few minutes old when written; refreshed by a manual run because the hourly snapshot was 3 hours old): HRRR (11 PM run, ends 10 PM Sun), RRFS (4 PM run), NBM, ECMWF and GFS via Open-Meteo, HRRR 15-minute (ends 11:45 PM Sun)",
+    "NWS San Francisco Area Forecast Discussion 12:22 AM Sat Nov 28",
     "NWS alerts: Coastal Flood Advisory (2:53 PM Fri, until 5 PM Sun)",
-    "NOAA Tides & Currents 9414523 predictions + SF Bay OFS (run ends 1 PM Sun)",
-    "County gauge feed read 6:40 PM (Atherton Channel at Alameda de las Pulgas 6:00 PM; upstream of Caltrain stage and rain gauge 5:13 PM)",
+    "NOAA Tides & Currents 9414523 predictions + SF Bay OFS (run ends 7 PM Sun)",
+    "County gauge feed read 1:10 AM (Atherton Channel at Alameda de las Pulgas 1:00 AM; upstream of Caltrain stage and rain gauge 5:13 PM Fri)",
     "Written automatically by Claude from public data — not an official forecast; follow NWS and SMC Alert."
   ]
 }
